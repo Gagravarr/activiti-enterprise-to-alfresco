@@ -74,6 +74,22 @@ share_config.write("""
 """)
 
 # Process the forms
+def process_fields(fields):
+   for field in fields:
+      if field.get("fieldType","") == "ContainerRepresentation":
+         # Recurse, we don't care about container formatting at this time
+         for f in field["fields"]:
+             if f in ("1","2","3","4"):
+                process_fields(field["fields"][f])
+             else:
+                print "Non-int field in fields '%s'" % f
+                print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+      else:
+         # Handle the form field
+         print "%s -> %s" % (field.get("id",None),field.get("name",None))
+         # TODO Handle it, for now just dump contents
+         print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+
 for form_num in range(len(form_refs)):
    form_elem = form_refs[form_num]
    form_ref = form_elem.get("{%s}formKey" % activiti_ns)
@@ -91,8 +107,9 @@ for form_num in range(len(form_refs)):
       print "Error - %s doesn't have a form-model for %s" % (app_zip, form_ref)
       sys.exit(1)
 
+   # Read the JSON from the zip
    form_json = json.loads(app.read(form_json_name))
-   print json.dumps(form_json, sort_keys=True, indent=4, separators=(',', ': '))
+   process_fields(form_json["fields"])
 
    #<config evaluator="string-compare" condition="activiti$......">
 

@@ -10,6 +10,13 @@ model_types = { bpmn20_ns: {
    "startEvent": "bpm:startTask",
    "userTask": "bpm:activitiOutcomeTask",
 }}
+property_types = {
+   "date": "d:date",
+   "integer": "d:int",
+   "text": "d:text",
+   "multi-line-text": "d:text",
+   "dropdown": "d:text",
+}
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
@@ -92,6 +99,7 @@ share_config.write("""
   <config evaluator="string-compare" condition="activiti$%s">
     <forms>
 """ % (process_id))
+# TODO Is it right to have the start task opened like this?
 
 # Process the forms
 def get_alfresco_task_type(task_tag):
@@ -124,10 +132,32 @@ def process_fields(fields):
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
       else:
          # Handle the form field
-         print "%s -> %s" % (field.get("id",None),field.get("name",None))
+         print "%s -> %s" % (field["id"],field.get("name",None))
+
+         alf_id = "%s%s" % (namespace, field["id"])
+
+         ftype = field["type"]
+         if not property_types.has_key(ftype):
+            print "Warning - unhandled type %s" % ftype
+            print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+            ftype = "text"
+         alf_type = property_types[ftype]
+
+         # TODO Handle required, read-only, default values, multiples etc
+         if field.get("options",None):
+            print " Warning: Options ignored!"
+
+         model.write("         <property name=\"%s\">\n" % alf_id)
+         if field.get("name",None):
+            model.write("           <title>%s</title>\n" % field["name"])
+         model.write("           <type>%s</type>\n" % alf_type)
+         model.write("         </property>\n")
+
+         # TODO output the Share "field-visibility" for this
+         # TODO output the Share "appearance" for this, with name as label
 
          # TODO Handle it, for now just dump contents
-         print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+         #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
 for form_num in range(len(form_refs)):
    form_elem = form_refs[form_num]
@@ -168,8 +198,6 @@ for form_num in range(len(form_refs)):
 
    # Output the new workflow
    # TODO
-
-   #<config evaluator="string-compare" condition="activiti$......">
 
 # Finish up
 model.write("""

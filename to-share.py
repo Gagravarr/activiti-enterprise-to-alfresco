@@ -6,6 +6,10 @@ import xml.etree.ElementTree as ET
 
 bpmn20_ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
 activiti_ns = 'http://activiti.org/bpmn'
+model_types = { bpmn20_ns: {
+   "startEvent": "bpm:startTask",
+   "userTask": "bpm:activitiOutcomeTask",
+}}
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
@@ -50,6 +54,20 @@ if len(form_refs) == 0:
 namespace_sf = namespace.split(":")[1]
 namespace_lf = namespace.replace(":","_")
 
+# Check we only had one process
+process_id = []
+process_tag_name = "{%s}process" % bpmn20_ns
+for elem in wf:
+   if elem.tag == process_tag_name:
+      process_id.append(elem.attrib["id"])
+if len(process_id) == 1:
+   process_id = process_id[0]
+else:
+   print "Expected 1 process definition in your BPMN file, but found %d" % (len(process_id))
+   print "Only one process per file is supported"
+   print "Found: %s" % " ".join(process_id)
+   sys.exit(1)
+
 # Start building out model and form config
 model = open("%s/model.xml" % output_dir, "w")
 model.write("""
@@ -71,9 +89,29 @@ model.write("""
 share_config = open("%s/share.xml" % output_dir, "w")
 share_config.write("""
 <alfresco-config>
-""")
+  <config evaluator="string-compare" condition="activiti$%s">
+    <forms>
+""" % (process_id))
 
 # Process the forms
+def get_alfresco_task_type(task_tag):
+   if "{" in task_tag and "}" in task_tag:
+      tag_ns = task_tag.split("{")[1].split("}")[0]
+      tag_name = task_tag.split("}")[1]
+      mt = model_types.get(tag_ns, None)
+      if not mt:
+         print "Error - no tag mappings found for namespace %s" % tag_ns
+         print "Unable to process %s" % task_tag
+         sys.exit(1)
+      alf_type = mt.get(tag_name, None)
+      if not alf_type:
+         print "Error - no tag mappings found for tag %s" % tag_name
+         print "Unable to process %s" % task_tag
+         sys.exit(1)
+      return alf_type
+   print "Error - Activiti task with form but no namespace - %s" % task_tag
+   sys.exit(1)
+
 def process_fields(fields):
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
@@ -87,6 +125,7 @@ def process_fields(fields):
       else:
          # Handle the form field
          print "%s -> %s" % (field.get("id",None),field.get("name",None))
+
          # TODO Handle it, for now just dump contents
          print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -97,6 +136,11 @@ for form_num in range(len(form_refs)):
    tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 
+   # Work out what type to make it
+   alf_task_type = get_alfresco_task_type(form_elem.tag)
+   alf_task_title = form_elem.attrib.get("name",None)
+
+   # Locate the JSON for it
    form_json_name = None
    for f in app.namelist():
       if f.startswith("form-models/") and f.endswith("-%s.json" % form_ref):
@@ -109,7 +153,21 @@ for form_num in range(len(form_refs)):
 
    # Read the JSON from the zip
    form_json = json.loads(app.read(form_json_name))
+
+   # Process as a type
+   model.write("    <type name=\"%s\">\n" % form_new_ref)
+   if alf_task_title:
+      model.write("       <title>%s</title>\n" % alf_task_title)
+   model.write("       <parent>%s</parent>\n" % alf_task_type)
+   model.write("       <properties>\n")
+
    process_fields(form_json["fields"])
+
+   model.write("       </properties>\n")
+   model.write("    </type>\n")
+
+   # Output the new workflow
+   # TODO
 
    #<config evaluator="string-compare" condition="activiti$......">
 
@@ -120,6 +178,8 @@ model.write("""
 """)
 model.close()
 share_config.write("""
+    </forms>
+  </config>
 </alfresco-config>
 """)
 share_config.close()

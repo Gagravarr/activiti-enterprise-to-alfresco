@@ -101,6 +101,36 @@ share_config.write("""
 """ % (process_id))
 # TODO Is it right to have the start task opened like this?
 
+context = open("%s/context.xml" % output_dir, "w")
+context.write("""
+?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+<beans>
+
+  <bean parent="dictionaryModelBootstrap">
+    <property name="models">
+      <list>
+        <!-- TODO Correct this to where you put model.xml -->
+        <value>alfresco/module/FIXME/model.xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean parent="workflowDeployer">
+    <property name="workflowDefinitions">
+      <list>
+        <props>
+          <prop key="engineId">activiti</prop>
+          <!-- TODO Correct this to where you put the updated BPMN file -->
+          <prop key="location">alfresco/module/FIXME/FIXME.bpmn20.xml</prop>
+          <prop key="mimetype">text/xml</prop>
+          <prop key="redeploy">false</prop>
+        </props>
+      </list>
+    </property>
+  </bean>
+""")
+
 # Process the forms
 def get_alfresco_task_type(task_tag):
    if "{" in task_tag and "}" in task_tag:
@@ -211,3 +241,7 @@ share_config.write("""
 </alfresco-config>
 """)
 share_config.close()
+context.write("""
+</beans>
+""")
+context.close()

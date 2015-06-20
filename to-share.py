@@ -4,10 +4,11 @@ import json
 import zipfile
 import xml.etree.ElementTree as ET
 
+start_task = "bpm:startTask"
 bpmn20_ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
 activiti_ns = 'http://activiti.org/bpmn'
 model_types = { bpmn20_ns: {
-   "startEvent": "bpm:startTask",
+   "startEvent": start_task,
    "userTask": "bpm:activitiOutcomeTask",
 }}
 property_types = {
@@ -94,12 +95,7 @@ model.write("""
 """ % (namespace, namespace_lf,namespace_sf))
 
 share_config = open("%s/share.xml" % output_dir, "w")
-share_config.write("""
-<alfresco-config>
-  <config evaluator="string-compare" condition="activiti$%s">
-    <forms>
-""" % (process_id))
-# TODO Is it right to have the start task opened like this?
+share_config.write("<alfresco-config>\n")
 
 context = open("%s/context.xml" % output_dir, "w")
 context.write("""
@@ -131,8 +127,8 @@ context.write("""
   </bean>
 """)
 
-# Process the forms
-def get_alfresco_task_type(task_tag):
+def get_alfresco_task_types(task_tag):
+   "Returns the Alfresco model type and Share form type for a given task"
    if "{" in task_tag and "}" in task_tag:
       tag_ns = task_tag.split("{")[1].split("}")[0]
       tag_name = task_tag.split("}")[1]
@@ -146,11 +142,21 @@ def get_alfresco_task_type(task_tag):
          print "Error - no tag mappings found for tag %s" % tag_name
          print "Unable to process %s" % task_tag
          sys.exit(1)
-      return alf_type
+      # Is it a start task?
+      is_start_task = False
+      if alf_type == start_task:
+         is_start_task = True
+      return (alf_type, is_start_task)
    print "Error - Activiti task with form but no namespace - %s" % task_tag
    sys.exit(1)
 
+# TODO Handle recursion for the share config bits
 def process_fields(fields):
+   # Share Apperance can only be done after all the fields are processed
+   appearances = []
+   share_indent = "        "
+   share_config.write(share_indent+"<field-visibility>\n")
+   # Process most of the form now
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
          # Recurse, we don't care about container formatting at this time
@@ -184,11 +190,17 @@ def process_fields(fields):
          model.write("         </property>\n")
 
          # TODO output the Share "field-visibility" for this
-         # TODO output the Share "appearance" for this, with name as label
 
          # TODO Handle it, for now just dump contents
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
+   # Finish off the share bits
+   share_config.write(share_indent+"</field-visibility>\n")
+   share_config.write(share_indent+"<appearance>\n")
+   # TODO output the Share "appearance" for this, with name as label
+   share_config.write(share_indent+"</appearance>\n")
+
+# Process the forms
 for form_num in range(len(form_refs)):
    form_elem = form_refs[form_num]
    form_ref = form_elem.get("{%s}formKey" % activiti_ns)
@@ -197,7 +209,7 @@ for form_num in range(len(form_refs)):
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 
    # Work out what type to make it
-   alf_task_type = get_alfresco_task_type(form_elem.tag)
+   alf_task_type, is_start_task = get_alfresco_task_types(form_elem.tag)
    alf_task_title = form_elem.attrib.get("name",None)
 
    # Locate the JSON for it
@@ -214,6 +226,18 @@ for form_num in range(len(form_refs)):
    # Read the JSON from the zip
    form_json = json.loads(app.read(form_json_name))
 
+   # Output the start of the share config
+   if is_start_task:
+      share_config.write("""
+  <config evaluator="string-compare" condition="activiti$%s">
+""" % (process_id))
+   else:
+      share_config.write("""
+  <config evaluator="task-type" condition="%s">
+""" % (form_new_ref))
+   share_config.write("    <forms>\n")
+   share_config.write("      <form>\n")
+
    # Process as a type
    model.write("    <type name=\"%s\">\n" % form_new_ref)
    if alf_task_title:
@@ -226,6 +250,10 @@ for form_num in range(len(form_refs)):
    model.write("       </properties>\n")
    model.write("    </type>\n")
 
+   share_config.write("      </form>\n")
+   share_config.write("    </forms>\n")
+   share_config.write("  </config>\n")
+
    # Output the new workflow
    # TODO
 
@@ -236,8 +264,6 @@ model.write("""
 """)
 model.close()
 share_config.write("""
-    </forms>
-  </config>
 </alfresco-config>
 """)
 share_config.close()

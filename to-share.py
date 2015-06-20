@@ -164,7 +164,7 @@ def process_fields(fields):
          # Handle the form field
          print "%s -> %s" % (field["id"],field.get("name",None))
 
-         alf_id = "%s%s" % (namespace, field["id"])
+         alf_id = "%s:%s" % (namespace_sf, field["id"])
 
          ftype = field["type"]
          if not property_types.has_key(ftype):
@@ -192,7 +192,7 @@ def process_fields(fields):
 for form_num in range(len(form_refs)):
    form_elem = form_refs[form_num]
    form_ref = form_elem.get("{%s}formKey" % activiti_ns)
-   form_new_ref = "%sForm%d" % (namespace, form_num)
+   form_new_ref = "%s:Form%d" % (namespace_sf, form_num)
    tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 

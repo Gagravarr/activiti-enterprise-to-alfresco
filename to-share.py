@@ -61,6 +61,7 @@ if len(form_refs) == 0:
 # Decide on the short namespace form
 namespace_sf = namespace.split(":")[1]
 namespace_lf = namespace.replace(":","_")
+model_name = "%s:%s" % (namespace_sf,namespace_lf)
 
 # Check we only had one process
 process_id = []
@@ -78,8 +79,7 @@ else:
 
 # Start building out model and form config
 model = open("%s/model.xml" % output_dir, "w")
-model.write("""
-<?xml version='1.0' encoding='UTF-8'?>
+model.write("""<?xml version='1.0' encoding='UTF-8'?>
 <model xmlns='http://www.alfresco.org/model/dictionary/1.0' name='%s'>
   <version>1.0</version>
   <imports>
@@ -87,19 +87,19 @@ model.write("""
     <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys"/>
     <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm"/>
     <import uri="http://www.alfresco.org/model/site/1.0" prefix="st"/>
+    <import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
   </imports>
   <namespaces>
     <namespace uri="%s" prefix="%s"/>
   </namespaces>
   <types>
-""" % (namespace, namespace_lf,namespace_sf))
+""" % (model_name, namespace_lf, namespace_sf))
 
 share_config = open("%s/share.xml" % output_dir, "w")
 share_config.write("<alfresco-config>\n")
 
 context = open("%s/context.xml" % output_dir, "w")
-context.write("""
-?xml version='1.0' encoding='UTF-8'?>
+context.write("""<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
 <beans>
 

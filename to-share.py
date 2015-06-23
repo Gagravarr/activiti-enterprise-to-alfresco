@@ -285,6 +285,14 @@ for form_num in range(len(form_refs)):
 
 # Check for things that Activiti Enterprise is happy with, but which
 #  Activiti-in-Alfresco won't like
+# TODO Make this more generic
+assignee_attr = "{%s}assignee" % activiti_ns
+assignees = wf.findall("**/[@%s]" % assignee_attr)
+for task in assignees:
+   assignee = task.get(assignee_attr)
+   if "${initiator}" == assignee:
+       task.set(assignee_attr, "${initiator.properties.userName}")
+
 due_date_attr = "{%s}dueDate" % activiti_ns
 due_dates = wf.findall("**/[@%s]" % due_date_attr)
 for task in due_dates:

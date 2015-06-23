@@ -4,6 +4,7 @@ import json
 import zipfile
 import xml.etree.ElementTree as ET
 from constants import *
+from converters import *
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
@@ -20,18 +21,16 @@ output_dir = sys.argv[4] if len(sys.argv) > 4 else "."
 # Sanity check our options
 with open(workflow, "r") as wf_file:
   wf_xml = wf_file.read()
-if not wf_xml.startswith("<?xml version='1.0'") or not \
-    "http://www.omg.org/spec/BPMN/20100524/MODEL" in wf_xml:
+if not wf_xml.startswith("<?xml version='1.0'") or not bpmn20_ns in wf_xml:
   print "Error - %s isn't a BPMN 2.0 workflow definition" % workflow
   sys.exit(1)
 
-#if ":" in namespace or "_" in namespace or "-" in namespace:
 if ":" in namespace or "_" in namespace:
   print "Namespace should be of the form namespace not name:space or name_space"
   print ""
   print "  eg sample-wf"
   print ""
-  print "Which will map to samplewf:Form1 samplewf:Form2 etc"
+  print "Which will map to sample-wf:Form1 sample-wf:Form2 etc"
   print ""
   print "Namespace should not contain a : as one will be added"
   print "Namespace should not contain a _ as that confuses the Share forms engine"
@@ -74,22 +73,8 @@ else:
    sys.exit(1)
 
 # Start building out model and form config
-model = open("%s/model.xml" % output_dir, "w")
-model.write("""<?xml version='1.0' encoding='UTF-8'?>
-<model xmlns='http://www.alfresco.org/model/dictionary/1.0' name='%s'>
-  <version>1.0</version>
-  <imports>
-    <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d"/>
-    <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys"/>
-    <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm"/>
-    <import uri="http://www.alfresco.org/model/site/1.0" prefix="st"/>
-    <import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
-  </imports>
-  <namespaces>
-    <namespace uri="%s" prefix="%s"/>
-  </namespaces>
-  <types>
-""" % (model_name, namespace_uri, namespace))
+model = ModelOutput(output_dir)
+model.begin(model_name, namespace_uri, namespace)
 
 share_config = open("%s/share.xml" % output_dir, "w")
 share_config.write("<alfresco-config>\n")
@@ -295,11 +280,7 @@ tree.write("FIXME.bpmn20.xml", encoding="UTF-8",
            xml_declaration=True)
 
 # Finish up
-model.write("""
-  </types>
-</model>
-""")
-model.close()
+model.complete()
 share_config.write("""
 </alfresco-config>
 """)

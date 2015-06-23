@@ -40,12 +40,16 @@ if not wf_xml.startswith("<?xml version='1.0'") or not \
   print "Error - %s isn't a BPMN 2.0 workflow definition" % workflow
   sys.exit(1)
 
-if ":" in namespace:
-  print "Namespace should be of the form namespace_prefix not name:space"
+#if ":" in namespace or "_" in namespace or "-" in namespace:
+if ":" in namespace or "_" in namespace:
+  print "Namespace should be of the form namespace not name:space or name_space"
   print ""
-  print "  eg sample_wf"
+  print "  eg sample-wf"
   print ""
-  print "Which will map to sample_wf:Form1 sample_wf:Form2 etc"
+  print "Which will map to samplewf:Form1 samplewf:Form2 etc"
+  print ""
+  print "Namespace should not contain a : as one will be added"
+  print "Namespace should not contain a _ as that confuses the Share forms engine"
   sys.exit(1)
 
 # Open the Activiti exported zip
@@ -167,20 +171,22 @@ def process_fields(fields):
    share_indent = "        "
    share_config.write(share_indent+"<field-visibility>\n")
    # Process most of the form now
-   handle_fields(fields, appearances)
+   handle_fields(fields, appearances, share_indent+"  ")
    # Finish off the share bits
    share_config.write(share_indent+"</field-visibility>\n")
    share_config.write(share_indent+"<appearance>\n")
-   # TODO output the Share "appearance" for this, with name as label
+   for app in appearances:
+      share_config.write(app)
    share_config.write(share_indent+"</appearance>\n")
 
-def handle_fields(fields, appearances):
+def handle_fields(fields, appearances, share_indent):
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
          # Recurse, we don't care about container formatting at this time
+         # TODO Track the containers into sets
          for f in field["fields"]:
              if f in ("1","2","3","4"):
-                handle_fields(field["fields"][f], appearances)
+                handle_fields(field["fields"][f], appearances, share_indent)
              else:
                 print "Non-int field in fields '%s'" % f
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
@@ -207,9 +213,17 @@ def handle_fields(fields, appearances):
          model.write("           <type>%s</type>\n" % alf_type)
          model.write("         </property>\n")
 
-         # TODO output the Share "field-visibility" for this
+         # Output the Share "field-visibility" for this
+         share_config.write(share_indent+"<show id=\"%s\" />\n" % alf_id)
 
-         # TODO Handle it, for now just dump contents
+         # Record the appearance details
+         appearance = share_indent + "<field id=\"%s\"" % alf_id
+         if field.has_key("name"):
+            appearance += " label=\"%s\"" % field.get("name")
+         appearance += ">\n"
+         appearance += share_indent + "</field>\n"
+         appearances.append(appearance)
+         # TODO Do this properly, or dump contents
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
 # Process the forms
@@ -268,6 +282,20 @@ for form_num in range(len(form_refs)):
    share_config.write("      </form>\n")
    share_config.write("    </forms>\n")
    share_config.write("  </config>\n")
+
+# Check for things that Activiti Enterprise is happy with, but which
+#  Activiti-in-Alfresco won't like
+due_date_attr = "{%s}dueDate" % activiti_ns
+due_dates = wf.findall("**/[@%s]" % due_date_attr)
+for task in due_dates:
+   due_date = task.get(due_date_attr)
+   if "${taskDueDateBean" in due_date:
+      tag = task.tag.replace("{%s}"%activiti_ns,"").replace("{%s}"%bpmn20_ns,"")
+      print "" 
+      print "WARNING: Activiti-online only Due Date found" 
+      print "   %s" % due_date
+      print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
+      task.attrib.pop(due_date_attr)
 
 # Output the updated workflow
 tree.write("FIXME.bpmn20.xml", encoding="UTF-8", 

@@ -1,5 +1,5 @@
-        Activiti Enterprise to Alfresco Converter
-        -----------------------------------------
+Activiti Enterprise to Alfresco Converter
+-----------------------------------------
 
 Converts Activiti Enterprise packages to be able to run on Alfresco One 
 on-premise instances (Community and Enterprise)
@@ -41,12 +41,12 @@ Tweak these as needed (eg naming), then deploy to your on-premise Alfresco!
 
 Use detail
 ----------
-to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [output dir]
+to-share.py &gt;exported.bpmn> &gt;exported-app.zip> &gt;namespace prefix> [output dir]
 
 Where:
- * <exported.bpmn> - BPMN workflow exported from Activiti
- * <exported-app.zip> - App definition zip exported from Activiti
- * <namespace prefix> - Prefix to use for the local version, eg sample-wf
+ * *exported.bpmn* - BPMN workflow exported from Activiti
+ * *exported-app.zip* - App definition zip exported from Activiti
+ * *namespace prefix* - Prefix to use for the local version, eg sample-wf
 
 This will generate in the output directory four files:
  * context.xml - Context file to deploy the model and workflow, tweak the

@@ -157,12 +157,20 @@ def process_fields(fields):
    share_indent = "        "
    share_config.write(share_indent+"<field-visibility>\n")
    # Process most of the form now
+   handle_fields(fields, appearances)
+   # Finish off the share bits
+   share_config.write(share_indent+"</field-visibility>\n")
+   share_config.write(share_indent+"<appearance>\n")
+   # TODO output the Share "appearance" for this, with name as label
+   share_config.write(share_indent+"</appearance>\n")
+
+def handle_fields(fields, appearances):
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
          # Recurse, we don't care about container formatting at this time
          for f in field["fields"]:
              if f in ("1","2","3","4"):
-                process_fields(field["fields"][f])
+                handle_fields(field["fields"][f], appearances)
              else:
                 print "Non-int field in fields '%s'" % f
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
@@ -193,12 +201,6 @@ def process_fields(fields):
 
          # TODO Handle it, for now just dump contents
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
-
-   # Finish off the share bits
-   share_config.write(share_indent+"</field-visibility>\n")
-   share_config.write(share_indent+"<appearance>\n")
-   # TODO output the Share "appearance" for this, with name as label
-   share_config.write(share_indent+"</appearance>\n")
 
 # Process the forms
 for form_num in range(len(form_refs)):

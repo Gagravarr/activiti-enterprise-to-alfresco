@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 start_task = "bpm:startTask"
 bpmn20_ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
 activiti_ns = 'http://activiti.org/bpmn'
+bpmn_namespaces = { '':bpmn20_ns, 'activiti':activiti_ns }
 model_types = { bpmn20_ns: {
    "startEvent": start_task,
    "userTask": "bpm:activitiOutcomeTask",
@@ -47,7 +48,12 @@ if ":" in namespace:
   print "Which will map to sample_wf:Form1 sample_wf:Form2 etc"
   sys.exit(1)
 
+# Open the Activiti exported zip
 app = zipfile.ZipFile(app_zip, "r")
+
+# Setup for BPMN parsing
+for prefix,ns in bpmn_namespaces.items():
+   ET.register_namespace(prefix,ns)
 
 # Look for Forms in the Workflow
 tree = ET.parse(workflow)

@@ -76,40 +76,13 @@ else:
 model = ModelOutput(output_dir)
 model.begin(model_name, namespace_uri, namespace)
 
-share_config = open("%s/share.xml" % output_dir, "w")
-share_config.write("<alfresco-config>\n")
+context = ContextOutput(output_dir)
+context.begin(model_name, namespace_uri, namespace)
 
-context = open("%s/context.xml" % output_dir, "w")
-context.write("""<?xml version='1.0' encoding='UTF-8'?>
-<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
-<beans>
+share_config = ShareConfigOutput(output_dir)
+share_config.begin(model_name, namespace_uri, namespace)
 
-  <bean id="%sModelBootstrap" 
-        parent="dictionaryModelBootstrap" 
-        depends-on="dictionaryBootstrap">
-    <property name="models">
-      <list>
-        <!-- TODO Correct this to where you put model.xml -->
-        <value>alfresco/module/FIXME/model.xml</value>
-      </list>
-    </property>
-  </bean>
-
-  <bean id="%sWorkflowDeployer" 
-        parent="workflowDeployer">
-    <property name="workflowDefinitions">
-      <list>
-        <props>
-          <prop key="engineId">activiti</prop>
-          <!-- TODO Correct this to where you put the updated BPMN file -->
-          <prop key="location">alfresco/module/FIXME/FIXME.bpmn20.xml</prop>
-          <prop key="mimetype">text/xml</prop>
-          <prop key="redeploy">false</prop>
-        </props>
-      </list>
-    </property>
-  </bean>
-""" % (namespace, namespace))
+##########################################################################
 
 def get_alfresco_task_types(task_tag):
    "Returns the Alfresco model type and Share form type for a given task"
@@ -281,11 +254,5 @@ tree.write("FIXME.bpmn20.xml", encoding="UTF-8",
 
 # Finish up
 model.complete()
-share_config.write("""
-</alfresco-config>
-""")
-share_config.close()
-context.write("""
-</beans>
-""")
-context.close()
+context.complete()
+share_config.complete()

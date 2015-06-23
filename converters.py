@@ -41,3 +41,58 @@ class ModelOutput(Output):
 </model>
 """)
       Output.complete(self)
+
+class ContextOutput(Output):
+   def __init__(self, output_dir):
+      Output.__init__(self,output_dir,"context.xml")
+
+   def begin(self, model_name, namespace_uri, namespace):
+      self.out.write("""<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+<beans>
+
+  <bean id="%sModelBootstrap" 
+        parent="dictionaryModelBootstrap" 
+        depends-on="dictionaryBootstrap">
+    <property name="models">
+      <list>
+        <!-- TODO Correct this to where you put model.xml -->
+        <value>alfresco/module/FIXME/model.xml</value>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="%sWorkflowDeployer" 
+        parent="workflowDeployer">
+    <property name="workflowDefinitions">
+      <list>
+        <props>
+          <prop key="engineId">activiti</prop>
+          <!-- TODO Correct this to where you put the updated BPMN file -->
+          <prop key="location">alfresco/module/FIXME/FIXME.bpmn20.xml</prop>
+          <prop key="mimetype">text/xml</prop>
+          <prop key="redeploy">false</prop>
+        </props>
+      </list>
+    </property>
+  </bean>
+""" % (namespace, namespace))
+
+   def complete(self):
+      self.out.write("""
+</beans>
+""")
+      Output.complete(self)
+
+class ShareConfigOutput(Output):
+   def __init__(self, output_dir):
+      Output.__init__(self,output_dir,"share.xml")
+
+   def begin(self, model_name, namespace_uri, namespace):
+      self.out.write("<alfresco-config>\n")
+
+   def complete(self):
+      self.out.write("""
+</alfresco-config>
+""")
+      Output.complete(self)

@@ -220,6 +220,9 @@ for form_num in range(len(form_refs)):
    tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 
+   # Update the form ID on the workflow
+   form_elem.set("{%s}formKey" % activiti_ns, form_new_ref)
+
    # Work out what type to make it
    alf_task_type, is_start_task = get_alfresco_task_types(form_elem.tag)
    alf_task_title = form_elem.attrib.get("name",None)
@@ -265,9 +268,6 @@ for form_num in range(len(form_refs)):
    share_config.write("      </form>\n")
    share_config.write("    </forms>\n")
    share_config.write("  </config>\n")
-
-   # Update the form ID on the workflow
-   # TODO
 
 # Output the updated workflow
 tree.write("FIXME.bpmn20.xml", encoding="UTF-8", 

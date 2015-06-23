@@ -226,27 +226,11 @@ for form_num in range(len(form_refs)):
    share_config.write("    </forms>\n")
    share_config.write("  </config>\n")
 
-# Check for things that Activiti Enterprise is happy with, but which
-#  Activiti-in-Alfresco won't like
-# TODO Make this more generic
-assignee_attr = "{%s}assignee" % activiti_ns
-assignees = wf.findall("**/[@%s]" % assignee_attr)
-for task in assignees:
-   assignee = task.get(assignee_attr)
-   if "${initiator}" == assignee:
-       task.set(assignee_attr, "${initiator.properties.userName}")
+##########################################################################
 
-due_date_attr = "{%s}dueDate" % activiti_ns
-due_dates = wf.findall("**/[@%s]" % due_date_attr)
-for task in due_dates:
-   due_date = task.get(due_date_attr)
-   if "${taskDueDateBean" in due_date:
-      tag = task.tag.replace("{%s}"%activiti_ns,"").replace("{%s}"%bpmn20_ns,"")
-      print "" 
-      print "WARNING: Activiti-online only Due Date found" 
-      print "   %s" % due_date
-      print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
-      task.attrib.pop(due_date_attr)
+# Sort out things that Activiti Enterprise is happy with, but which
+#  Activiti-in-Alfresco won't like
+BPMNFixer.fix_all(wf)
 
 # Output the updated workflow
 tree.write("FIXME.bpmn20.xml", encoding="UTF-8", 

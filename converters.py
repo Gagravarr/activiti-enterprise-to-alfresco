@@ -13,7 +13,31 @@ class Output(object):
       self.out.close()
       self.out = None
 
+class BPMNFixer(object):
+   fixers = []
+   def __init__(self, tag, attr):
+      BPMNFixer.fixers.append(self)
+      self.attr = attr
+      self.tag = tag
+   def fix_for_tag(self, tag):
+      pass
+   def fix_for_attr(self, tag, attr_val):
+      pass
+   @staticmethod
+   def fix_all(wf):
+      for fixer in BPMNFixer.fixers:
+         if fixer.tag:
+            tags = wf.findall("**/%s" % fixer.tag)
+            for tag in tags:
+               fixer.fix_for_tag(tag)
+         if fixer.attr:
+            tags = wf.findall("**/[@%s]" % fixer.attr)
+            for tag in tags:
+               attr_val = tag.get(fixer.attr)
+               fixer.fix_for_attr(tag, attr_val)
+
 ##########################################################################
+
 class ModelOutput(Output):
    def __init__(self, output_dir):
       Output.__init__(self,output_dir,"model.xml")
@@ -96,3 +120,29 @@ class ShareConfigOutput(Output):
 </alfresco-config>
 """)
       Output.complete(self)
+
+##########################################################################
+
+from constants import bpmn20_ns, activiti_ns, xml_namespaces
+
+class AssigneeFixer(BPMNFixer):
+   def __init__(self):
+      BPMNFixer.__init__(self,None,"{%s}assignee" % activiti_ns)
+   def fix_for_attr(self, task, assignee):
+      if "${initiator}" == assignee:
+         task.set(self.attr, "${initiator.properties.userName}")
+AssigneeFixer()
+
+class DueDateFixer(BPMNFixer):
+   def __init__(self):
+      BPMNFixer.__init__(self,None,"{%s}dueDate" % activiti_ns)
+
+   def fix_for_attr(self, task, due_date):
+      if "${taskDueDateBean" in due_date:
+         tag = task.tag.replace("{%s}"%activiti_ns,"").replace("{%s}"%bpmn20_ns,"")
+         print ""
+         print "WARNING: Activiti-online only Due Date found"
+         print "   %s" % due_date
+         print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
+         task.attrib.pop(self.attr)
+DueDateFixer()

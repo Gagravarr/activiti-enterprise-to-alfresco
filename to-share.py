@@ -21,9 +21,9 @@ property_types = {
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
-  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace> [output dir]"
+  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [output dir]"
   print ""
-  print " eg to-share.py exported.bpmn20.xml exported.zip sample:wf"
+  print " eg to-share.py exported.bpmn20.xml exported.zip sample_wf"
   sys.exit(1)
 
 workflow = sys.argv[1]
@@ -39,18 +39,19 @@ if not wf_xml.startswith("<?xml version='1.0'") or not \
   print "Error - %s isn't a BPMN 2.0 workflow definition" % workflow
   sys.exit(1)
 
-if not ":" in namespace:
-  print "Namespace should be of the form namespace:prefix"
+if ":" in namespace:
+  print "Namespace should be of the form namespace_prefix not name:space"
   print ""
-  print "  eg sample:wf"
+  print "  eg sample_wf"
   print ""
-  print "Which will map to sample:wfForm1 samplewfForm2 etc"
+  print "Which will map to sample_wf:Form1 sample_wf:Form2 etc"
   sys.exit(1)
 
 app = zipfile.ZipFile(app_zip, "r")
 
 # Look for Forms in the Workflow
-wf = ET.fromstring(wf_xml)
+tree = ET.parse(workflow)
+wf = tree.getroot()
 form_refs = wf.findall("**/[@{%s}formKey]" % activiti_ns)
 
 if len(form_refs) == 0:
@@ -58,10 +59,10 @@ if len(form_refs) == 0:
    print "The Workflow BPMN 2.0 XML file should be fine to be loaded into"
    print " your normal Alfresco instance and used as-is"
 
-# Decide on the short namespace form
-namespace_sf = namespace.split(":")[1]
-namespace_lf = namespace.replace(":","_")
-model_name = "%s:%s" % (namespace_sf,namespace_lf)
+# Decide on the short namespace forms
+namespace_sf = namespace + ":"
+namespace_uri = "Activit_Exported_%s" % namespace
+model_name = "%s:model" % namespace
 
 # Check we only had one process
 process_id = []
@@ -93,7 +94,7 @@ model.write("""<?xml version='1.0' encoding='UTF-8'?>
     <namespace uri="%s" prefix="%s"/>
   </namespaces>
   <types>
-""" % (model_name, namespace_lf, namespace_sf))
+""" % (model_name, namespace_uri, namespace))
 
 share_config = open("%s/share.xml" % output_dir, "w")
 share_config.write("<alfresco-config>\n")
@@ -103,7 +104,9 @@ context.write("""<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
 <beans>
 
-  <bean parent="dictionaryModelBootstrap">
+  <bean id="%sModelBootstrap" 
+        parent="dictionaryModelBootstrap" 
+        depends-on="dictionaryBootstrap">
     <property name="models">
       <list>
         <!-- TODO Correct this to where you put model.xml -->
@@ -112,7 +115,8 @@ context.write("""<?xml version='1.0' encoding='UTF-8'?>
     </property>
   </bean>
 
-  <bean parent="workflowDeployer">
+  <bean id="%sWorkflowDeployer" 
+        parent="workflowDeployer">
     <property name="workflowDefinitions">
       <list>
         <props>
@@ -125,7 +129,7 @@ context.write("""<?xml version='1.0' encoding='UTF-8'?>
       </list>
     </property>
   </bean>
-""")
+""" % (namespace, namespace))
 
 def get_alfresco_task_types(task_tag):
    "Returns the Alfresco model type and Share form type for a given task"
@@ -178,7 +182,7 @@ def handle_fields(fields, appearances):
          # Handle the form field
          print "%s -> %s" % (field["id"],field.get("name",None))
 
-         alf_id = "%s:%s" % (namespace_sf, field["id"])
+         alf_id = "%s:%s" % (namespace, field["id"])
 
          ftype = field["type"]
          if not property_types.has_key(ftype):
@@ -206,7 +210,7 @@ def handle_fields(fields, appearances):
 for form_num in range(len(form_refs)):
    form_elem = form_refs[form_num]
    form_ref = form_elem.get("{%s}formKey" % activiti_ns)
-   form_new_ref = "%s:Form%d" % (namespace_sf, form_num)
+   form_new_ref = "%s:Form%d" % (namespace, form_num)
    tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 
@@ -256,8 +260,12 @@ for form_num in range(len(form_refs)):
    share_config.write("    </forms>\n")
    share_config.write("  </config>\n")
 
-   # Output the new workflow
+   # Update the form ID on the workflow
    # TODO
+
+# Output the updated workflow
+tree.write("FIXME.bpmn20.xml", encoding="UTF-8", 
+           xml_declaration=True)
 
 # Finish up
 model.write("""

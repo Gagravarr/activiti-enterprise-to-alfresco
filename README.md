@@ -41,7 +41,7 @@ Tweak these as needed (eg naming), then deploy to your on-premise Alfresco!
 
 Use detail
 ----------
-to-share.py &gt;exported.bpmn> &gt;exported-app.zip> &gt;namespace prefix> [output dir]
+to-share.py &lt;exported.bpmn> &lt;exported-app.zip> &lt;namespace prefix> [output dir]
 
 Where:
  * *exported.bpmn* - BPMN workflow exported from Activiti

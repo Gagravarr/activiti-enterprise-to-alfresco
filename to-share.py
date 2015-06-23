@@ -3,22 +3,7 @@ import os, sys
 import json
 import zipfile
 import xml.etree.ElementTree as ET
-
-start_task = "bpm:startTask"
-bpmn20_ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
-activiti_ns = 'http://activiti.org/bpmn'
-bpmn_namespaces = { '':bpmn20_ns, 'activiti':activiti_ns }
-model_types = { bpmn20_ns: {
-   "startEvent": start_task,
-   "userTask": "bpm:activitiOutcomeTask",
-}}
-property_types = {
-   "date": "d:date",
-   "integer": "d:int",
-   "text": "d:text",
-   "multi-line-text": "d:text",
-   "dropdown": "d:text",
-}
+from constants import *
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
@@ -56,7 +41,7 @@ if ":" in namespace or "_" in namespace:
 app = zipfile.ZipFile(app_zip, "r")
 
 # Setup for BPMN parsing
-for prefix,ns in bpmn_namespaces.items():
+for prefix,ns in xml_namespaces.items():
    ET.register_namespace(prefix,ns)
 
 # Look for Forms in the Workflow

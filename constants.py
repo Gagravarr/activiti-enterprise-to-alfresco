@@ -29,4 +29,8 @@ property_types = {
    "text": "d:text",
    "multi-line-text": "d:text",
    "dropdown": "d:text",
+   "readonly-text": "d:text",
+}
+assoc_types = {
+   "people": [False,False,"cm:person",False,False],
 }

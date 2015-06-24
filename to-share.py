@@ -113,8 +113,30 @@ def process_fields(fields):
    appearances = []
    share_indent = "        "
    share_config.write(share_indent+"<field-visibility>\n")
+   # Model associations can only be done after all the fields are processed
+   associations = []
+   model.write("       <properties>\n")
    # Process most of the form now
-   handle_fields(fields, appearances, share_indent+"  ")
+   handle_fields(fields, appearances, associations, share_indent+"  ")
+   # Finish off the model bits
+   model.write("       </properties>\n")
+   if associations:
+      model.write("       <associations>\n")
+      for assoc in associations:
+         model.write("         <association name=\"%s\">\n" % assoc[0])
+         if assoc[1]:
+            model.write("           <title>%s</title>\n" % assoc[1])
+         model.write("           <source>\n")
+         model.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][0]).lower())
+         model.write("             <many>%s</many>\n" % str(assoc[2][1]).lower())
+         model.write("           </source>\n")
+         model.write("           <target>\n")
+         model.write("             <class>%s</class>\n" % str(assoc[2][2]).lower())
+         model.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][3]).lower())
+         model.write("             <many>%s</many>\n" % str(assoc[2][4]).lower())
+         model.write("           </target>\n")
+         model.write("         </association>\n")
+      model.write("       </associations>\n")
    # Finish off the share bits
    share_config.write(share_indent+"</field-visibility>\n")
    share_config.write(share_indent+"<appearance>\n")
@@ -122,14 +144,14 @@ def process_fields(fields):
       share_config.write(app)
    share_config.write(share_indent+"</appearance>\n")
 
-def handle_fields(fields, appearances, share_indent):
+def handle_fields(fields, appearances, associations, share_indent):
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
          # Recurse, we don't care about container formatting at this time
          # TODO Track the containers into sets
          for f in field["fields"]:
              if f in ("1","2","3","4"):
-                handle_fields(field["fields"][f], appearances, share_indent)
+                handle_fields(field["fields"][f], appearances, associations, share_indent)
              else:
                 print "Non-int field in fields '%s'" % f
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
@@ -138,23 +160,28 @@ def handle_fields(fields, appearances, share_indent):
          print "%s -> %s" % (field["id"],field.get("name",None))
 
          alf_id = "%s:%s" % (namespace, field["id"])
-
+         name = field.get("name", None)
          ftype = field["type"]
-         if not property_types.has_key(ftype):
+
+         # Check how to convert
+         if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
             print "Warning - unhandled type %s" % ftype
             print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
             ftype = "text"
-         alf_type = property_types[ftype]
+         alf_type = property_types.get(ftype, None)
 
          # TODO Handle required, read-only, default values, multiples etc
          if field.get("options",None):
             print " Warning: Options ignored!"
 
-         model.write("         <property name=\"%s\">\n" % alf_id)
-         if field.get("name",None):
-            model.write("           <title>%s</title>\n" % field["name"])
-         model.write("           <type>%s</type>\n" % alf_type)
-         model.write("         </property>\n")
+         if alf_type:
+            model.write("         <property name=\"%s\">\n" % alf_id)
+            if name:
+               model.write("           <title>%s</title>\n" % name)
+            model.write("           <type>%s</type>\n" % alf_type)
+            model.write("         </property>\n")
+         if assoc_types.has_key(ftype):
+            associations.append((alf_id,name,assoc_types.get(ftype)))
 
          # Output the Share "field-visibility" for this
          share_config.write(share_indent+"<show id=\"%s\" />\n" % alf_id)
@@ -164,6 +191,12 @@ def handle_fields(fields, appearances, share_indent):
          if field.has_key("name"):
             appearance += " label=\"%s\"" % field.get("name")
          appearance += ">\n"
+
+         if ftype == "readonly-text":
+             appearance += share_indent + "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
+             appearance += share_indent + "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+             appearance += share_indent + "  </control>\n"
+
          appearance += share_indent + "</field>\n"
          appearances.append(appearance)
          # TODO Do this properly, or dump contents
@@ -215,11 +248,9 @@ for form_num in range(len(form_refs)):
    if alf_task_title:
       model.write("       <title>%s</title>\n" % alf_task_title)
    model.write("       <parent>%s</parent>\n" % alf_task_type)
-   model.write("       <properties>\n")
 
    process_fields(form_json["fields"])
 
-   model.write("       </properties>\n")
    model.write("    </type>\n")
 
    share_config.write("      </form>\n")

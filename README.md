@@ -49,8 +49,8 @@ Where:
  * *namespace prefix* - Prefix to use for the local version, eg sample-wf
 
 This will generate in the output directory four files:
- * context.xml - Context file to deploy the model and workflow, tweak the
-                 names and paths within this for your project
+ * module-context.xml - Context file to deploy the model and workflow, 
+                 tweak the names and paths within this for your project
  * model.xml   - Alfresco Model for the workflow form values
  * share.xml   - Share Custom Config with the form definitions in
  * FIXME.bpmn20.xml - Updated BPMN workflow definition

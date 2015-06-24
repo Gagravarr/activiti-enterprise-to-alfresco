@@ -8,7 +8,7 @@ from converters import *
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
-  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [output dir]"
+  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [module name] [output dir]"
   print ""
   print " eg to-share.py exported.bpmn20.xml exported.zip sample-wf"
   sys.exit(1)
@@ -16,7 +16,8 @@ if len(sys.argv) < 4 or "--help" in sys.argv:
 workflow = sys.argv[1]
 app_zip  = sys.argv[2]
 namespace = sys.argv[3]
-output_dir = sys.argv[4] if len(sys.argv) > 4 else "."
+module_name = sys.argv[4] if len(sys.argv) > 4 else "FIXME"
+output_dir  = sys.argv[5] if len(sys.argv) > 5 else "."
 
 # Sanity check our options
 with open(workflow, "r") as wf_file:
@@ -73,13 +74,13 @@ else:
    sys.exit(1)
 
 # Start building out model and form config
-model = ModelOutput(output_dir)
+model = ModelOutput(output_dir, module_name)
 model.begin(model_name, namespace_uri, namespace)
 
-context = ContextOutput(output_dir)
+context = ContextOutput(output_dir, module_name)
 context.begin(model_name, namespace_uri, namespace)
 
-share_config = ShareConfigOutput(output_dir)
+share_config = ShareConfigOutput(output_dir, module_name)
 share_config.begin(model_name, namespace_uri, namespace)
 
 ##########################################################################
@@ -222,6 +223,7 @@ for form_num in range(len(form_refs)):
    form_ref = form_elem.get("{%s}formKey" % activiti_ns)
    form_new_ref = "%s:Form%d" % (namespace, form_num)
    tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
+   print ""
    print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
 
    # Update the form ID on the workflow
@@ -278,7 +280,7 @@ for form_num in range(len(form_refs)):
 BPMNFixer.fix_all(wf)
 
 # Output the updated workflow
-tree.write("FIXME.bpmn20.xml", encoding="UTF-8", 
+tree.write("%s.bpmn20.xml" % module_name, encoding="UTF-8", 
            xml_declaration=True)
 
 # Finish up

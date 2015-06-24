@@ -1,7 +1,8 @@
 # Various conversion helpers
 class Output(object):
-   def __init__(self, output_dir, filename):
+   def __init__(self, output_dir, filename, module_name):
       self.out = open("%s/%s" % (output_dir,filename),"w")
+      self.module_name = module_name
 
    def begin(self, model_name, namespace_uri, namespace):
       pass
@@ -39,8 +40,8 @@ class BPMNFixer(object):
 ##########################################################################
 
 class ModelOutput(Output):
-   def __init__(self, output_dir):
-      Output.__init__(self,output_dir,"model.xml")
+   def __init__(self, output_dir, module_name):
+      Output.__init__(self,output_dir,"model.xml", module_name)
 
    def begin(self, model_name, namespace_uri, namespace):
       self.out.write("""<?xml version='1.0' encoding='UTF-8'?>
@@ -67,8 +68,8 @@ class ModelOutput(Output):
       Output.complete(self)
 
 class ContextOutput(Output):
-   def __init__(self, output_dir):
-      Output.__init__(self,output_dir,"context.xml")
+   def __init__(self, output_dir, module_name):
+      Output.__init__(self,output_dir,"module-context.xml", module_name)
 
    def begin(self, model_name, namespace_uri, namespace):
       self.out.write("""<?xml version='1.0' encoding='UTF-8'?>
@@ -81,7 +82,7 @@ class ContextOutput(Output):
     <property name="models">
       <list>
         <!-- TODO Correct this to where you put model.xml -->
-        <value>alfresco/module/FIXME/model.xml</value>
+        <value>alfresco/module/%s/model.xml</value>
       </list>
     </property>
   </bean>
@@ -93,14 +94,14 @@ class ContextOutput(Output):
         <props>
           <prop key="engineId">activiti</prop>
           <!-- TODO Correct this to where you put the updated BPMN file -->
-          <prop key="location">alfresco/module/FIXME/FIXME.bpmn20.xml</prop>
+          <prop key="location">alfresco/module/%s/%s.bpmn20.xml</prop>
           <prop key="mimetype">text/xml</prop>
           <prop key="redeploy">false</prop>
         </props>
       </list>
     </property>
   </bean>
-""" % (namespace, namespace))
+""" % (namespace, self.module_name, namespace, self.module_name, self.module_name))
 
    def complete(self):
       self.out.write("""
@@ -109,8 +110,8 @@ class ContextOutput(Output):
       Output.complete(self)
 
 class ShareConfigOutput(Output):
-   def __init__(self, output_dir):
-      Output.__init__(self,output_dir,"share.xml")
+   def __init__(self, output_dir, module_name):
+      Output.__init__(self,output_dir,"share.xml", module_name)
 
    def begin(self, model_name, namespace_uri, namespace):
       self.out.write("<alfresco-config>\n")

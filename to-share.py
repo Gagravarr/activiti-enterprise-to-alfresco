@@ -169,16 +169,26 @@ def handle_fields(fields, appearances, associations, share_indent):
             print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
             ftype = "text"
          alf_type = property_types.get(ftype, None)
+         options = field.get("options",None)
 
-         # TODO Handle required, read-only, default values, multiples etc
-         if field.get("options",None):
-            print " Warning: Options ignored!"
+         # TODO Handle required, default values, multiples etc
 
          if alf_type:
             model.write("         <property name=\"%s\">\n" % alf_id)
             if name:
                model.write("           <title>%s</title>\n" % name)
             model.write("           <type>%s</type>\n" % alf_type)
+            if ftype == "readonly-text":
+               model.write("           <default>%s</default>\n" % field.get("value",""))
+            if options:
+               model.write("           <constraints>\n")
+               model.write("             <constraint type=\"LIST\">\n")
+               model.write("               <parameter name=\"allowedValues\"><list>\n")
+               for opt in options:
+                  model.write("                 <value>%s</value>\n" % opt["name"])
+               model.write("               </list></parameter>\n")
+               model.write("             </constraint>\n")
+               model.write("           </constraints>\n")
             model.write("         </property>\n")
          if assoc_types.has_key(ftype):
             associations.append((alf_id,name,assoc_types.get(ftype)))
@@ -196,10 +206,14 @@ def handle_fields(fields, appearances, associations, share_indent):
              appearance += share_indent + "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
              appearance += share_indent + "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
              appearance += share_indent + "  </control>\n"
+         if ftype in ("radio-buttons","dropdown") and options:
+             appearance += share_indent + "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
+             appearance += share_indent + "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
+             appearance += share_indent + "  </control>\n"
 
          appearance += share_indent + "</field>\n"
          appearances.append(appearance)
-         # TODO Do this properly, or dump contents
+         # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
 # Process the forms

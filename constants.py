@@ -28,8 +28,9 @@ property_types = {
    "integer": "d:int",
    "text": "d:text",
    "multi-line-text": "d:text",
-   "dropdown": "d:text",
    "readonly-text": "d:text",
+   "radio-buttons": "d:text",
+   "dropdown": "d:text",
 }
 assoc_types = {
    "people": [False,False,"cm:person",False,False],

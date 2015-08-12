@@ -55,6 +55,34 @@ This will generate in the output directory four files:
  * share.xml   - Share Custom Config with the form definitions in
  * FIXME.bpmn20.xml - Updated BPMN workflow definition
 
+Deploy detail
+-------------
+After running the converter, review your output for sanity, and fix any errors 
+/ warnings reported during the run. Next, rename your files to have sensible 
+names for your use case, and edit the module name and BPMN file name in the
+module context.
+
+Copy the following to your Alfresco install:
+ * *renamed FIXME.bpmn20.xml* -> *Alfresco classes*/alfresco/module/*mname*/*renamed*.bpmn20.xml
+ * module-context.xml -> *Alfresco classes*/alfresco/module/*mname*/
+ * model.xml -> *Alfresco classes*/alfresco/module/*mname*/
+
+And to your Share install:
+ * share.xml -> *Share classes*/alfresco/web-extension/share-config-custom.xml
+
+Limitations
+-----------
+Currently, only simpler workflows and applications can be converted. You will
+received warnings and errors for unsupported features.
+
+Required fields, default values and multiple values are currently not
+supported. Fields using those get converted into simple single value fields.
+
+Activiti-online style Due Dates are not supported, and will be ignored.
+
+At this time, column information in the form definition is discarded, and 
+the generated Share configuration is simply created with a single column.
+
 Tutorials and References
 ------------------------
 Activiti Online:

@@ -252,8 +252,8 @@ for form_num in range(len(form_refs)):
 
    # Do the Share Config conversion + output
    if is_start_task:
-      share_form.write_out(True)
-   share_form.write_out(False)
+      share_form.write_out(True, True)
+   share_form.write_out(is_start_task, False)
 
 ##########################################################################
 

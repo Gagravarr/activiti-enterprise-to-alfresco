@@ -139,7 +139,7 @@ class ShareFormConfigOutput(object):
    def record_appearance(self, app):
       self.appearances.append(app)
 
-   def write_out(self, as_start=False):
+   def write_out(self, is_start=False, as_start=False):
       share_config = self.share_config
       default_indent = ShareFormConfigOutput.default_indent
 
@@ -166,6 +166,8 @@ class ShareFormConfigOutput(object):
       if not as_start:
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:taskId")
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:status")
+      if not is_start:
+          share_config.write(default_indent+"  <show id=\"%s\" />\n" % "transitions")
       share_config.write(default_indent+"</field-visibility>\n")
 
       share_config.write(default_indent+"<appearance>\n")
@@ -173,6 +175,8 @@ class ShareFormConfigOutput(object):
          # Output as-is with indent
          for l in [x for x in app.split("\n") if x]:
             share_config.write("%s  %s\n" % (default_indent,l))
+      if not is_start:
+         share_config.write(default_indent+"  <field id=\"transitions\"/>\n")
       share_config.write(default_indent+"</appearance>\n")
 
       share_config.write("      </form>\n")

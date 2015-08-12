@@ -124,6 +124,63 @@ class ShareConfigOutput(Output):
 
 ##########################################################################
 
+class ShareFormConfigOutput(object):
+   default_indent = "        "
+   def __init__(self, share_config, process_id, form_ref):
+      self.share_config = share_config
+      self.process_id = process_id
+      self.form_ref = form_ref
+
+      self.visabilities = []
+      self.appearances = []
+
+   def record_visibility(self, vis):
+      self.visabilities.append(vis)
+   def record_appearance(self, app):
+      self.appearances.append(app)
+
+   def write_out(self, as_start=False):
+      share_config = self.share_config
+      default_indent = ShareFormConfigOutput.default_indent
+
+      if as_start:
+         share_config.write("""
+  <config evaluator="string-compare" condition="activiti$%s">
+""" % (self.process_id))
+      else:
+         share_config.write("""
+  <config evaluator="task-type" condition="%s">
+""" % (self.form_ref))
+
+      # TODO What about <form id="workflow-details"> for non-start tasks?
+      share_config.write("    <forms>\n")
+      share_config.write("      <form>\n")
+
+      share_config.write(default_indent+"<field-visibility>\n")
+      for vis in self.visabilities:
+          # Convert for non-start as needed
+          if not as_start and "bpm:assignee" == vis:
+             vis = "taskOwner"
+          # Output
+          share_config.write(default_indent+"  <show id=\"%s\" />\n" % vis)
+      if not as_start:
+          share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:taskId")
+          share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:status")
+      share_config.write(default_indent+"</field-visibility>\n")
+
+      share_config.write(default_indent+"<appearance>\n")
+      for app in self.appearances:
+         # Output as-is with indent
+         for l in [x for x in app.split("\n") if x]:
+            share_config.write("%s  %s\n" % (default_indent,l))
+      share_config.write(default_indent+"</appearance>\n")
+
+      share_config.write("      </form>\n")
+      share_config.write("    </forms>\n")
+      share_config.write("  </config>\n")
+
+##########################################################################
+
 from constants import bpmn20_ns, activiti_ns, xml_namespaces
 
 class AssigneeFixer(BPMNFixer):

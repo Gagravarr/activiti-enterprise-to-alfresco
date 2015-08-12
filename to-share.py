@@ -109,16 +109,12 @@ def get_alfresco_task_types(task_tag):
    sys.exit(1)
 
 # TODO Handle recursion for the share config bits
-def process_fields(fields):
-   # Share Apperance can only be done after all the fields are processed
-   appearances = []
-   share_indent = "        "
-   share_config.write(share_indent+"<field-visibility>\n")
+def process_fields(fields, share_form):
    # Model associations can only be done after all the fields are processed
    associations = []
    model.write("       <properties>\n")
    # Process most of the form now
-   handle_fields(fields, appearances, associations, share_indent+"  ")
+   handle_fields(fields, share_form, associations)
    # Finish off the model bits
    model.write("       </properties>\n")
    if associations:
@@ -138,21 +134,15 @@ def process_fields(fields):
          model.write("           </target>\n")
          model.write("         </association>\n")
       model.write("       </associations>\n")
-   # Finish off the share bits
-   share_config.write(share_indent+"</field-visibility>\n")
-   share_config.write(share_indent+"<appearance>\n")
-   for app in appearances:
-      share_config.write(app)
-   share_config.write(share_indent+"</appearance>\n")
 
-def handle_fields(fields, appearances, associations, share_indent):
+def handle_fields(fields, share_form, associations):
    for field in fields:
       if field.get("fieldType","") == "ContainerRepresentation":
          # Recurse, we don't care about container formatting at this time
          # TODO Track the containers into sets
          for f in field["fields"]:
              if f in ("1","2","3","4"):
-                handle_fields(field["fields"][f], appearances, associations, share_indent)
+                handle_fields(field["fields"][f], share_form, associations)
              else:
                 print "Non-int field in fields '%s'" % f
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
@@ -194,26 +184,26 @@ def handle_fields(fields, appearances, associations, share_indent):
          if assoc_types.has_key(ftype):
             associations.append((alf_id,name,assoc_types.get(ftype)))
 
-         # Output the Share "field-visibility" for this
-         share_config.write(share_indent+"<show id=\"%s\" />\n" % alf_id)
+         # Record the Share "field-visibility" for this
+         share_form.record_visibility(alf_id)
 
          # Record the appearance details
-         appearance = share_indent + "<field id=\"%s\"" % alf_id
+         appearance = "<field id=\"%s\"" % alf_id
          if field.has_key("name"):
             appearance += " label=\"%s\"" % field.get("name")
          appearance += ">\n"
 
          if ftype == "readonly-text":
-             appearance += share_indent + "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
-             appearance += share_indent + "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
-             appearance += share_indent + "  </control>\n"
+             appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
+             appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+             appearance += "  </control>\n"
          if ftype in ("radio-buttons","dropdown") and options:
-             appearance += share_indent + "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
-             appearance += share_indent + "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
-             appearance += share_indent + "  </control>\n"
+             appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
+             appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
+             appearance += "  </control>\n"
 
-         appearance += share_indent + "</field>\n"
-         appearances.append(appearance)
+         appearance += "</field>\n"
+         share_form.record_appearance(appearance)
          # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
@@ -247,17 +237,8 @@ for form_num in range(len(form_refs)):
    # Read the JSON from the zip
    form_json = json.loads(app.read(form_json_name))
 
-   # Output the start of the share config
-   if is_start_task:
-      share_config.write("""
-  <config evaluator="string-compare" condition="activiti$%s">
-""" % (process_id))
-   else:
-      share_config.write("""
-  <config evaluator="task-type" condition="%s">
-""" % (form_new_ref))
-   share_config.write("    <forms>\n")
-   share_config.write("      <form>\n")
+   # Prepare for the Share Config part
+   share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref)
 
    # Process as a type
    model.write("    <type name=\"%s\">\n" % form_new_ref)
@@ -265,13 +246,14 @@ for form_num in range(len(form_refs)):
       model.write("       <title>%s</title>\n" % alf_task_title)
    model.write("       <parent>%s</parent>\n" % alf_task_type)
 
-   process_fields(form_json["fields"])
+   process_fields(form_json["fields"], share_form)
 
    model.write("    </type>\n")
 
-   share_config.write("      </form>\n")
-   share_config.write("    </forms>\n")
-   share_config.write("  </config>\n")
+   # Do the Share Config conversion + output
+   if is_start_task:
+      share_form.write_out(True)
+   share_form.write_out(False)
 
 ##########################################################################
 

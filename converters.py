@@ -1,7 +1,9 @@
 # Various conversion helpers
 class Output(object):
    def __init__(self, output_dir, filename, module_name):
-      self.out = open("%s/%s" % (output_dir,filename),"w")
+      import os
+      self.outfile = os.path.join(output_dir, filename)
+      self.out = open(self.outfile,"w")
       self.module_name = module_name
 
    def begin(self, model_name, namespace_uri, namespace):

@@ -17,13 +17,21 @@ workflow = sys.argv[1]
 app_zip  = sys.argv[2]
 namespace = sys.argv[3]
 module_name = sys.argv[4] if len(sys.argv) > 4 else "FIXME"
-output_dir  = sys.argv[5] if len(sys.argv) > 5 else "."
+output_dir  = sys.argv[5] if len(sys.argv) > 5 else os.path.curdir
 
 # Sanity check our options
 with open(workflow, "r") as wf_file:
   wf_xml = wf_file.read()
 if not wf_xml.startswith("<?xml version='1.0'") or not bpmn20_ns in wf_xml:
   print "Error - %s isn't a BPMN 2.0 workflow definition" % workflow
+  sys.exit(1)
+
+if os.path.exists(output_dir):
+  print "Output files will be placed in '%s'" % output_dir
+else:
+  print "Error - desired output folder not found: %s" % output_dir
+  print ""
+  print "Please create or correct the path, and re-run"
   sys.exit(1)
 
 if ":" in namespace or "_" in namespace:
@@ -262,10 +270,20 @@ for form_num in range(len(form_refs)):
 BPMNFixer.fix_all(wf)
 
 # Output the updated workflow
-tree.write("%s.bpmn20.xml" % module_name, encoding="UTF-8", 
-           xml_declaration=True)
+updated_workflow = os.path.join(output_dir, "%s.bpmn20.xml" % module_name)
+tree.write(updated_workflow, encoding="UTF-8", xml_declaration=True)
 
 # Finish up
 model.complete()
 context.complete()
 share_config.complete()
+
+# Report as done
+print ""
+print "Conversion completed!"
+print "Files generated are:"
+for f in (model,context,share_config,updated_workflow):
+   if hasattr(f,"outfile"):
+      print "  %s" % f.outfile
+   else:
+      print "  %s" % f

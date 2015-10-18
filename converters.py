@@ -10,7 +10,7 @@ class Output(object):
       pass
 
    def write(self, line):
-      self.out.write(line)
+      self.out.write( line.encode("UTF-8") )
 
    def complete(self):
       self.out.close()

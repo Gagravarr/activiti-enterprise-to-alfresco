@@ -156,9 +156,10 @@ def handle_fields(fields, share_form, associations):
                 print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
       else:
          # Handle the form field
-         print "%s -> %s" % (field["id"],field.get("name",None))
+         field_id = field["id"].replace(u"\u2019","")
+         print "%s -> %s" % (field_id,field.get("name",None))
 
-         alf_id = "%s:%s" % (namespace, field["id"])
+         alf_id = "%s:%s" % (namespace, field_id)
          name = field.get("name", None)
          ftype = field["type"]
 

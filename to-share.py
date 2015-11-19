@@ -93,6 +93,11 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 ##########################################################################
 
+def build_field_ids(field):
+   field_id = field["id"].replace(u"\u2019","")
+   alf_id = "%s:%s" % (namespace, field_id)
+   return (field_id, alf_id)
+
 # TODO Handle recursion for the share config bits
 def handle_fields(fields, share_form):
    for field in fields:
@@ -104,12 +109,11 @@ def handle_fields(fields, share_form):
          handle_fields(child_fields, share_form)
       else:
          # Handle the form field
-         field_id = field["id"].replace(u"\u2019","")
-         print "%s -> %s" % (field_id,field.get("name",None))
-
-         alf_id = "%s:%s" % (namespace, field_id)
+         field_id, alf_id = build_field_ids(field)
          name = field.get("name", None)
          ftype = field["type"]
+
+         print "%s -> %s" % (field_id,name)
 
          # Check how to convert
          if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
@@ -121,6 +125,7 @@ def handle_fields(fields, share_form):
 
          # TODO Handle required, default values, multiples etc
          # TODO Pull this logic out so that Aspects can re-use it
+         # TODO Check how aspects need to work for Share config
 
          if alf_type:
             model.write("         <property name=\"%s\">\n" % alf_id)

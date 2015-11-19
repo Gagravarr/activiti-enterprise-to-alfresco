@@ -94,45 +94,14 @@ share_config.begin(model_name, namespace_uri, namespace)
 ##########################################################################
 
 # TODO Handle recursion for the share config bits
-def process_fields(form, share_form):
-   # Model associations can only be done after all the fields are processed
-   associations = []
-   model.write("       <properties>\n")
-   # Process most of the form now
-   handle_fields(get_child_fields(form), share_form, associations)
-   # Finish off the model bits
-   model.write("       </properties>\n")
-   if form.aspects:
-      model.write("       <mandatory-aspects>\n")
-      for aspect in form.aspects:
-         model.write("          <aspect>%s</aspect>\n" % aspect)
-      model.write("       </mandatory-aspects>\n")
-   if associations:
-      model.write("       <associations>\n")
-      for assoc in associations:
-         model.write("         <association name=\"%s\">\n" % assoc[0])
-         if assoc[1]:
-            model.write("           <title>%s</title>\n" % assoc[1])
-         model.write("           <source>\n")
-         model.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][0]).lower())
-         model.write("             <many>%s</many>\n" % str(assoc[2][1]).lower())
-         model.write("           </source>\n")
-         model.write("           <target>\n")
-         model.write("             <class>%s</class>\n" % str(assoc[2][2]).lower())
-         model.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][3]).lower())
-         model.write("             <many>%s</many>\n" % str(assoc[2][4]).lower())
-         model.write("           </target>\n")
-         model.write("         </association>\n")
-      model.write("       </associations>\n")
-
-def handle_fields(fields, share_form, associations):
+def handle_fields(fields, share_form):
    for field in fields:
       # Is this a normal field, or a container with children?
       child_fields = get_child_fields(field)
       if child_fields:
          # Recurse, we don't care about container formatting at this time
          # TODO Track the containers into sets
-         handle_fields(child_fields, share_form, associations)
+         handle_fields(child_fields, share_form)
       else:
          # Handle the form field
          field_id = field["id"].replace(u"\u2019","")
@@ -171,7 +140,7 @@ def handle_fields(fields, share_form, associations):
                model.write("           </constraints>\n")
             model.write("         </property>\n")
          if assoc_types.has_key(ftype):
-            associations.append((alf_id,name,assoc_types.get(ftype)))
+            model.associations.append((alf_id,name,assoc_types.get(ftype)))
 
          # Record the Share "field-visibility" for this
          share_form.record_visibility(alf_id)
@@ -300,7 +269,7 @@ for form in forms:
 
    # Process as a type
    model.start_type(form)
-   process_fields(form, share_form)
+   handle_fields(get_child_fields(form), share_form)
    model.end_type(form)
 
    # Do the Share Config conversion + output

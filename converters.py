@@ -68,15 +68,47 @@ class ModelOutput(Output):
   <types>
 """ % (model_name, namespace_uri, namespace))
 
+   def _start(self):
+      self.aspects = []
+      self.associations = []
+      self.out.write("       <properties>\n")
+   def _end(self):
+      self.out.write("       </properties>\n")
+      if self.aspects:
+         self.out.write("       <mandatory-aspects>\n")
+         for aspect in form.aspects:
+            self.out.write("          <aspect>%s</aspect>\n" % aspect)
+         self.out.write("       </mandatory-aspects>\n")
+      if self.associations:
+         self.out.write("       <associations>\n")
+         for assoc in self.associations:
+            self.out.write("         <association name=\"%s\">\n" % assoc[0])
+            if assoc[1]:
+               self.out.write("           <title>%s</title>\n" % assoc[1])
+            self.out.write("           <source>\n")
+            self.out.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][0]).lower())
+            self.out.write("             <many>%s</many>\n" % str(assoc[2][1]).lower())
+            self.out.write("           </source>\n")
+            self.out.write("           <target>\n")
+            self.out.write("             <class>%s</class>\n" % str(assoc[2][2]).lower())
+            self.out.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][3]).lower())
+            self.out.write("             <many>%s</many>\n" % str(assoc[2][4]).lower())
+            self.out.write("           </target>\n")
+            self.out.write("         </association>\n")
+         self.out.write("       </associations>\n")
+
    def start_type(self, form):
       alf_task_type, is_start_task = get_alfresco_task_types(form)
 
+      self.out.write("\n")
       self.out.write("    <type name=\"%s\">\n" % form.form_new_ref)
       if form.form_title:
          self.out.write("       <title>%s</title>\n" % form.form_title)
       self.out.write("       <parent>%s</parent>\n" % alf_task_type)
+      self._start()
 
    def end_type(self, form):
+      self._end()
       self.out.write("    </type>\n")
 
    def start_aspect(self, todo):
@@ -87,8 +119,11 @@ class ModelOutput(Output):
 
   <aspects>
 """)
+      self.out.write("\n")
       self.out.write("    <aspect name=\"%s\">\n" % "TODO")
+      self._start()
    def end_aspect(self, todo):
+      self._end()
       self.out.write("    </aspect>\n")
 
    def complete(self):

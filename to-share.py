@@ -217,6 +217,7 @@ def handle_fields(fields, share_form, associations):
          # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
+
 # Load the forms into memory, so we can pre-process stuff
 class Form(object):
    def __init__(self, form_num, form_elem):
@@ -251,10 +252,21 @@ forms = []
 for form_num in range(len(form_refs)):
    forms.append( Form(form_num,form_refs[form_num]) )
 
-# TODO Detect forms with the same elements in them, and
-#      do those as an Aspect
 
-# Process the forms
+# Detect forms with the same elements in them, and do those as an Aspect
+form_fields = {}
+for form in forms:
+   # TODO Move the recursion/field logic onto the Form class
+   # TODO Then detect duplicates
+   pass
+
+for field in form_fields.keys():
+   if len(form_fields[field].models) > 1:
+      # TODO Re-write as an aspect
+      pass
+
+
+# Process the forms in turn
 for form in forms:
    print ""
    print "Processing form %s for %s / %s" % (form.form_ref, form.tag_name, form.form_id)

@@ -118,12 +118,12 @@ def get_alfresco_task_types(form):
    sys.exit(1)
 
 # TODO Handle recursion for the share config bits
-def process_fields(fields, share_form):
+def process_fields(form, share_form):
    # Model associations can only be done after all the fields are processed
    associations = []
    model.write("       <properties>\n")
    # Process most of the form now
-   handle_fields(fields, share_form, associations)
+   handle_fields(get_child_fields(form), share_form, associations)
    # Finish off the model bits
    model.write("       </properties>\n")
    if associations:
@@ -146,15 +146,12 @@ def process_fields(fields, share_form):
 
 def handle_fields(fields, share_form, associations):
    for field in fields:
-      if field.get("fieldType","") == "ContainerRepresentation":
+      # Is this a normal field, or a container with children?
+      child_fields = get_child_fields(field)
+      if child_fields:
          # Recurse, we don't care about container formatting at this time
          # TODO Track the containers into sets
-         for f in field["fields"]:
-             if f in ("1","2","3","4"):
-                handle_fields(field["fields"][f], share_form, associations)
-             else:
-                print "Non-int field in fields '%s'" % f
-                print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+         handle_fields(child_fields, share_form, associations)
       else:
          # Handle the form field
          field_id = field["id"].replace(u"\u2019","")
@@ -217,6 +214,21 @@ def handle_fields(fields, share_form, associations):
          # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
+# Finds the child fields of a form / container field
+def get_child_fields(container):
+   if isinstance(container,Form):
+      return container.json["fields"]
+   fields = []
+   if container.get("fieldType","") == "ContainerRepresentation":
+      for f in container["fields"]:
+          if f in ("1","2","3","4"):
+             for cf in container["fields"][f]:
+                if cf:
+                   fields.append(cf)
+          else:
+             print "Non-int field in fields '%s'" % f
+             print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+   return fields
 
 # Load the forms into memory, so we can pre-process stuff
 class Form(object):
@@ -291,7 +303,7 @@ for form in forms:
       model.write("       <title>%s</title>\n" % alf_task_title)
    model.write("       <parent>%s</parent>\n" % alf_task_type)
 
-   process_fields(form.json["fields"], share_form)
+   process_fields(form, share_form)
 
    model.write("    </type>\n")
 

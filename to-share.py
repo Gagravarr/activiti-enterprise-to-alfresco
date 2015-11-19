@@ -93,30 +93,6 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 ##########################################################################
 
-def get_alfresco_task_types(form):
-   "Returns the Alfresco model type and Share form type for a given task"
-   task_tag = form.form_tag
-   if "{" in task_tag and "}" in task_tag:
-      tag_ns = task_tag.split("{")[1].split("}")[0]
-      tag_name = task_tag.split("}")[1]
-      mt = model_types.get(tag_ns, None)
-      if not mt:
-         print "Error - no tag mappings found for namespace %s" % tag_ns
-         print "Unable to process %s" % task_tag
-         sys.exit(1)
-      alf_type = mt.get(tag_name, None)
-      if not alf_type:
-         print "Error - no tag mappings found for tag %s" % tag_name
-         print "Unable to process %s" % task_tag
-         sys.exit(1)
-      # Is it a start task?
-      is_start_task = False
-      if alf_type == start_task:
-         is_start_task = True
-      return (alf_type, is_start_task)
-   print "Error - Activiti task with form but no namespace - %s" % task_tag
-   sys.exit(1)
-
 # TODO Handle recursion for the share config bits
 def process_fields(form, share_form):
    # Model associations can only be done after all the fields are processed
@@ -175,6 +151,7 @@ def handle_fields(fields, share_form, associations):
          options = field.get("options",None)
 
          # TODO Handle required, default values, multiples etc
+         # TODO Pull this logic out so that Aspects can re-use it
 
          if alf_type:
             model.write("         <property name=\"%s\">\n" % alf_id)
@@ -303,6 +280,7 @@ for field_id in form_fields.keys():
       # TODO Re-write as an aspect
       print "TODO: Aspect needed for %s of %s" % (field_id, ",".join([f.form_id for f in form_fields[field_id]["forms"]]))
 # TODO Minimum set of aspects
+aspects = []
 
 
 # Process the forms in turn
@@ -316,27 +294,24 @@ for form in forms:
 
    # Work out what type to make it
    alf_task_type, is_start_task = get_alfresco_task_types(form)
-   alf_task_title = form.form_title
 
    # Prepare for the Share Config part
    share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref)
 
    # Process as a type
-   model.write("    <type name=\"%s\">\n" % form_new_ref)
-   if alf_task_title:
-      model.write("       <title>%s</title>\n" % alf_task_title)
-   model.write("       <parent>%s</parent>\n" % alf_task_type)
-
+   model.start_type(form)
    process_fields(form, share_form)
-
-   model.write("    </type>\n")
+   model.end_type(form)
 
    # Do the Share Config conversion + output
    if is_start_task:
       share_form.write_out(True, True)
    share_form.write_out(is_start_task, False)
 
-# TODO Output the aspect definitions to the model
+for aspect in aspects:
+   model.start_aspect("TODO")
+   # TODO Output the aspect definitions to the model
+   model.end_aspect("TODO")
 
 ##########################################################################
 

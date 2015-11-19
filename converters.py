@@ -1,4 +1,9 @@
-# Various conversion helpers
+from constants import *
+
+##########################################################################
+
+# Various conversion helpers / base classes
+
 class Output(object):
    def __init__(self, output_dir, filename, module_name):
       import os
@@ -44,6 +49,7 @@ class BPMNFixer(object):
 class ModelOutput(Output):
    def __init__(self, output_dir, module_name):
       Output.__init__(self,output_dir,"model.xml", module_name)
+      self.to_close = "types"
 
    def begin(self, model_name, namespace_uri, namespace):
       self.out.write("""<?xml version='1.0' encoding='UTF-8'?>
@@ -62,11 +68,34 @@ class ModelOutput(Output):
   <types>
 """ % (model_name, namespace_uri, namespace))
 
+   def start_type(self, form):
+      alf_task_type, is_start_task = get_alfresco_task_types(form)
+
+      self.out.write("    <type name=\"%s\">\n" % form.form_new_ref)
+      if form.form_title:
+         self.out.write("       <title>%s</title>\n" % form.form_title)
+      self.out.write("       <parent>%s</parent>\n" % alf_task_type)
+
+   def end_type(self, form):
+      self.out.write("    </type>\n")
+
+   def start_aspect(self, todo):
+      if self.to_close == "types":
+         self.to_close = "aspects"
+         self.out.write("""
+  </types>
+
+  <aspects>
+""")
+      self.out.write("    <aspect name=\"%s\">\n" % "TODO")
+   def end_aspect(self, todo):
+      self.out.write("    </aspect>\n")
+
    def complete(self):
       self.out.write("""
-  </types>
+  </%s>
 </model>
-""")
+""" % (self.to_close))
       Output.complete(self)
 
 class ContextOutput(Output):
@@ -187,7 +216,31 @@ class ShareFormConfigOutput(object):
 
 ##########################################################################
 
-from constants import bpmn20_ns, activiti_ns, xml_namespaces
+def get_alfresco_task_types(form):
+   "Returns the Alfresco model type and Share form type for a given task"
+   task_tag = form.form_tag
+   if "{" in task_tag and "}" in task_tag:
+      tag_ns = task_tag.split("{")[1].split("}")[0]
+      tag_name = task_tag.split("}")[1]
+      mt = model_types.get(tag_ns, None)
+      if not mt:
+         print "Error - no tag mappings found for namespace %s" % tag_ns
+         print "Unable to process %s" % task_tag
+         sys.exit(1)
+      alf_type = mt.get(tag_name, None)
+      if not alf_type:
+         print "Error - no tag mappings found for tag %s" % tag_name
+         print "Unable to process %s" % task_tag
+         sys.exit(1)
+      # Is it a start task?
+      is_start_task = False
+      if alf_type == start_task:
+         is_start_task = True
+      return (alf_type, is_start_task)
+   print "Error - Activiti task with form but no namespace - %s" % task_tag
+   sys.exit(1)
+
+##########################################################################
 
 class AssigneeFixer(BPMNFixer):
    def __init__(self):

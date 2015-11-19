@@ -93,8 +93,9 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 ##########################################################################
 
-def get_alfresco_task_types(task_tag):
+def get_alfresco_task_types(form):
    "Returns the Alfresco model type and Share form type for a given task"
+   task_tag = form.form_tag
    if "{" in task_tag and "}" in task_tag:
       tag_ns = task_tag.split("{")[1].split("}")[0]
       tag_name = task_tag.split("}")[1]
@@ -216,35 +217,58 @@ def handle_fields(fields, share_form, associations):
          # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
-# Process the forms
+# Load the forms into memory, so we can pre-process stuff
+class Form(object):
+   def __init__(self, form_num, form_elem):
+      self.form_elem = form_elem
+      self.form_num = form_num
+
+      self.form_tag = form_elem.tag
+      self.form_ref = form_elem.get("{%s}formKey" % activiti_ns)
+      self.tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
+      self.form_id = form_elem.get("id","(n/a)")
+      self.form_title = form_elem.attrib.get("name",None)
+
+   def update_form_id(self):
+      self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)
+      self.form_elem.set("{%s}formKey" % activiti_ns, self.form_new_ref)
+
+   def load_json(self):
+      # Locate the JSON for it
+      self.form_json_name = None
+      for f in app.namelist():
+         if f.startswith("form-models/") and f.endswith("-%s.json" % self.form_ref):
+            self.form_json_name = f
+      if self.form_json_name:
+         print " - Reading from %s" % self.form_json_name
+      else:
+         print "Error - %s doesn't have a form-model for %s" % (app_zip, self.form_ref)
+         sys.exit(1)
+      # Read the JSON from the zip
+      self.json = json.loads(app.read(self.form_json_name))
+
+forms = []
 for form_num in range(len(form_refs)):
-   form_elem = form_refs[form_num]
-   form_ref = form_elem.get("{%s}formKey" % activiti_ns)
-   form_new_ref = "%s:Form%d" % (namespace, form_num)
-   tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
+   forms.append( Form(form_num,form_refs[form_num]) )
+
+# TODO Detect forms with the same elements in them, and
+#      do those as an Aspect
+
+# Process the forms
+for form in forms:
    print ""
-   print "Processing form %s for %s / %s" % (form_ref, tag_name, form_elem.get("id","(n/a)"))
+   print "Processing form %s for %s / %s" % (form.form_ref, form.tag_name, form.form_id)
 
    # Update the form ID on the workflow
-   form_elem.set("{%s}formKey" % activiti_ns, form_new_ref)
+   form.update_form_id()
 
    # Work out what type to make it
-   alf_task_type, is_start_task = get_alfresco_task_types(form_elem.tag)
-   alf_task_title = form_elem.attrib.get("name",None)
-
-   # Locate the JSON for it
-   form_json_name = None
-   for f in app.namelist():
-      if f.startswith("form-models/") and f.endswith("-%s.json" % form_ref):
-         form_json_name = f
-   if form_json_name:
-      print " - Reading from %s" % form_json_name
-   else:
-      print "Error - %s doesn't have a form-model for %s" % (app_zip, form_ref)
-      sys.exit(1)
+   alf_task_type, is_start_task = get_alfresco_task_types(form)
+   alf_task_title = form.form_title
 
    # Read the JSON from the zip
-   form_json = json.loads(app.read(form_json_name))
+   form.load_json()
+   form_new_ref = form.form_new_ref
 
    # Prepare for the Share Config part
    share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref)
@@ -255,7 +279,7 @@ for form_num in range(len(form_refs)):
       model.write("       <title>%s</title>\n" % alf_task_title)
    model.write("       <parent>%s</parent>\n" % alf_task_type)
 
-   process_fields(form_json["fields"], share_form)
+   process_fields(form.json["fields"], share_form)
 
    model.write("    </type>\n")
 

@@ -126,6 +126,11 @@ def process_fields(form, share_form):
    handle_fields(get_child_fields(form), share_form, associations)
    # Finish off the model bits
    model.write("       </properties>\n")
+   if form.aspects:
+      model.write("       <mandatory-aspects>\n")
+      for aspect in form.aspects:
+         model.write("          <aspect>%s</aspect>\n" % aspect)
+      model.write("       </mandatory-aspects>\n")
    if associations:
       model.write("       <associations>\n")
       for assoc in associations:
@@ -214,6 +219,7 @@ def handle_fields(fields, share_form, associations):
          # TODO Use this to finish getting and handling the other options
          #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
+
 # Finds the child fields of a form / container field
 def get_child_fields(container):
    if isinstance(container,Form):
@@ -229,6 +235,18 @@ def get_child_fields(container):
              print "Non-int field in fields '%s'" % f
              print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
    return fields
+def get_all_child_fields(form):
+   fields = []
+   def do_field(field,fields):
+      cf = get_child_fields(field)
+      if cf:
+         for f in cf:
+            do_field(f, fields)
+      else:
+         fields.append(field)
+   do_field(form, fields)
+   return fields
+
 
 # Load the forms into memory, so we can pre-process stuff
 class Form(object):
@@ -241,6 +259,7 @@ class Form(object):
       self.tag_name = form_elem.tag.replace("{%s}" % bpmn20_ns, "")
       self.form_id = form_elem.get("id","(n/a)")
       self.form_title = form_elem.attrib.get("name",None)
+      self.aspects = []
 
    def update_form_id(self):
       self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)
@@ -262,20 +281,28 @@ class Form(object):
 
 forms = []
 for form_num in range(len(form_refs)):
-   forms.append( Form(form_num,form_refs[form_num]) )
+   # Build a wrapper around the form
+   form = Form(form_num,form_refs[form_num])
+   # Read the JSON from the zip
+   form.load_json()
+   # Record this completed form
+   forms.append( form )
 
 
 # Detect forms with the same elements in them, and do those as an Aspect
 form_fields = {}
 for form in forms:
-   # TODO Move the recursion/field logic onto the Form class
-   # TODO Then detect duplicates
-   pass
+   fields = get_all_child_fields(form)
+   for f in fields:
+      if not form_fields.has_key(f["id"]):
+         form_fields[f["id"]] = {"field":f,"forms":[]}
+      form_fields[f["id"]]["forms"].append(form)
 
-for field in form_fields.keys():
-   if len(form_fields[field].models) > 1:
+for field_id in form_fields.keys():
+   if len(form_fields[field_id]["forms"]) > 1:
       # TODO Re-write as an aspect
-      pass
+      print "TODO: Aspect needed for %s of %s" % (field_id, ",".join([f.form_id for f in form_fields[field_id]["forms"]]))
+# TODO Minimum set of aspects
 
 
 # Process the forms in turn
@@ -285,14 +312,11 @@ for form in forms:
 
    # Update the form ID on the workflow
    form.update_form_id()
+   form_new_ref = form.form_new_ref
 
    # Work out what type to make it
    alf_task_type, is_start_task = get_alfresco_task_types(form)
    alf_task_title = form.form_title
-
-   # Read the JSON from the zip
-   form.load_json()
-   form_new_ref = form.form_new_ref
 
    # Prepare for the Share Config part
    share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref)
@@ -311,6 +335,8 @@ for form in forms:
    if is_start_task:
       share_form.write_out(True, True)
    share_form.write_out(is_start_task, False)
+
+# TODO Output the aspect definitions to the model
 
 ##########################################################################
 

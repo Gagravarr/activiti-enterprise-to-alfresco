@@ -76,7 +76,7 @@ class ModelOutput(Output):
       self.out.write("       </properties>\n")
       if self.aspects:
          self.out.write("       <mandatory-aspects>\n")
-         for aspect in form.aspects:
+         for aspect in self.aspects:
             self.out.write("          <aspect>%s</aspect>\n" % aspect)
          self.out.write("       </mandatory-aspects>\n")
       if self.associations:
@@ -106,6 +106,7 @@ class ModelOutput(Output):
          self.out.write("       <title>%s</title>\n" % form.form_title)
       self.out.write("       <parent>%s</parent>\n" % alf_task_type)
       self._start()
+      self.aspects = form.aspects
 
    def end_type(self, form):
       self._end()

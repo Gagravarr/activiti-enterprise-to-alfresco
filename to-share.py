@@ -96,7 +96,22 @@ share_config.begin(model_name, namespace_uri, namespace)
 def build_field_ids(field):
    field_id = field["id"].replace(u"\u2019","")
    alf_id = "%s:%s" % (namespace, field_id)
-   return (field_id, alf_id)
+   name = field.get("name", None)
+   return (field_id, alf_id, name)
+
+def build_field_type(field):
+   ftype = field["type"]
+
+   # Check how to convert
+   if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
+      print "Warning - unhandled type %s" % ftype
+      print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+      ftype = "text"
+
+   alf_type = property_types.get(ftype, None)
+   options = field.get("options",None)
+
+   return (ftype, alf_type, options)
 
 # TODO Handle recursion for the share config bits
 def handle_fields(fields, share_form):
@@ -109,23 +124,21 @@ def handle_fields(fields, share_form):
          handle_fields(child_fields, share_form)
       else:
          # Handle the form field
-         field_id, alf_id = build_field_ids(field)
-         name = field.get("name", None)
-         ftype = field["type"]
+         field_to_model(field)
+         field_to_share(field)
+
+def field_to_model(field):
+         field_id, alf_id, name = build_field_ids(field)
+         ftype, alf_type, options = build_field_type(field)
 
          print "%s -> %s" % (field_id,name)
 
-         # Check how to convert
-         if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
-            print "Warning - unhandled type %s" % ftype
-            print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
-            ftype = "text"
-         alf_type = property_types.get(ftype, None)
-         options = field.get("options",None)
-
          # TODO Handle required, default values, multiples etc
          # TODO Pull this logic out so that Aspects can re-use it
-         # TODO Check how aspects need to work for Share config
+
+         # TODO Change it so that the Aspect fields (properties) are
+         #  added at the model level to Aspects, but Share level for
+         #  the form/task
 
          if alf_type:
             model.write("         <property name=\"%s\">\n" % alf_id)
@@ -147,13 +160,17 @@ def handle_fields(fields, share_form):
          if assoc_types.has_key(ftype):
             model.associations.append((alf_id,name,assoc_types.get(ftype)))
 
+def field_to_share(field):
+         field_id, alf_id, name = build_field_ids(field)
+         ftype, alf_type, options = build_field_type(field)
+
          # Record the Share "field-visibility" for this
          share_form.record_visibility(alf_id)
 
          # Record the appearance details
          appearance = "<field id=\"%s\"" % alf_id
-         if field.has_key("name"):
-            appearance += " label=\"%s\"" % field.get("name")
+         if name:
+            appearance += " label=\"%s\"" % name
          appearance += ">\n"
 
          if ftype == "readonly-text":
@@ -276,6 +293,9 @@ for form in forms:
    model.start_type(form)
    handle_fields(get_child_fields(form), share_form)
    model.end_type(form)
+
+   # Process Share config for any aspect-held fields
+   # TODO
 
    # Do the Share Config conversion + output
    if is_start_task:

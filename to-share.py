@@ -127,7 +127,6 @@ def handle_fields(fields, share_form):
          field_to_model(field)
          field_to_share(field)
 
-# TODO Use from Aspects
 def field_to_model(field):
    field_id, alf_id, name = build_field_ids(field)
    ftype, alf_type, options = build_field_type(field)
@@ -136,10 +135,6 @@ def field_to_model(field):
 
    # TODO Handle required, default values, multiples etc
    # TODO Pull this logic out so that Aspects can re-use it
-
-   # TODO Change it so that the Aspect fields (properties) are
-   #  added at the model level to Aspects, but Share level for
-   #  the form/task
 
    if alf_type:
       model.write("         <property name=\"%s\">\n" % alf_id)
@@ -296,16 +291,21 @@ for form in forms:
    model.end_type(form)
 
    # Process Share config for any aspect-held fields
-   # TODO
+   for aspect in form.aspects:
+     for field in aspect["fields"]:
+       field_to_share(field)
 
    # Do the Share Config conversion + output
    if is_start_task:
       share_form.write_out(True, True)
    share_form.write_out(is_start_task, False)
 
+# Output the aspect definitions to the model
+# TODO Aspect IDs
 for aspect in aspects:
    model.start_aspect("TODO")
-   # TODO Output the aspect definitions to the model
+   for field in aspect["fields"]:
+      field_to_model(field)
    model.end_aspect("TODO")
 
 ##########################################################################

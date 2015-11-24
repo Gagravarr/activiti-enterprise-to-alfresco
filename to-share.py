@@ -253,7 +253,8 @@ for form_num in range(len(form_refs)):
    forms.append( form )
 
 
-# Detect forms with the same elements in them, and do those as an Aspect
+## Detect forms with the same elements in them, and do those as an Aspect
+# Work out which fields are used in multiple forms
 form_fields = {}
 for form in forms:
    fields = get_all_child_fields(form)
@@ -262,6 +263,7 @@ for form in forms:
          form_fields[f["id"]] = {"field":f,"forms":[]}
       form_fields[f["id"]]["forms"].append(form)
 
+# Group the fields by forms using them
 _tmp_aspects = {}
 for field_id in form_fields.keys():
    field_forms = form_fields[field_id]["forms"]
@@ -273,6 +275,7 @@ for field_id in form_fields.keys():
          _tmp_aspects[wanted_by] = []
       _tmp_aspects[wanted_by].append(details)
 
+# Build aspects for each collection of used fields
 aspects = []
 for wb in _tmp_aspects.keys():
    aspect_id = len(aspects)
@@ -285,6 +288,8 @@ for wb in _tmp_aspects.keys():
       print " - %s" % fd["field_id"]
       details["fields"].append(fd["field"])
       # TODO Remove this field from the current forms
+      # TODO Will probably need an "ignored fields" list on the form,
+      #      and maybe storing the aspects on the form differently
    for form in _tmp_aspects[wb][0]["forms"]:
       form.aspects.append(details)
    aspects.append(details)
@@ -315,6 +320,8 @@ for form in forms:
      print " Adding aspect references for %s" % (aspect["name"])
      for field in aspect["fields"]:
        field_to_share(field)
+       # TODO Remove this when aspect fields are skipped on form model
+       print "WARNING: Field duplicated on model: %s" % build_field_ids(field)[0]
 
    # Do the Share Config conversion + output
    if is_start_task:

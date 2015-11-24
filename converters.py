@@ -77,7 +77,7 @@ class ModelOutput(Output):
       if self.aspects:
          self.out.write("       <mandatory-aspects>\n")
          for aspect in self.aspects:
-            self.out.write("          <aspect>%s</aspect>\n" % aspect)
+            self.out.write("          <aspect>%s</aspect>\n" % aspect["name"])
          self.out.write("       </mandatory-aspects>\n")
       if self.associations:
          self.out.write("       <associations>\n")

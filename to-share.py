@@ -127,65 +127,66 @@ def handle_fields(fields, share_form):
          field_to_model(field)
          field_to_share(field)
 
+# TODO Use from Aspects
 def field_to_model(field):
-         field_id, alf_id, name = build_field_ids(field)
-         ftype, alf_type, options = build_field_type(field)
+   field_id, alf_id, name = build_field_ids(field)
+   ftype, alf_type, options = build_field_type(field)
 
-         print "%s -> %s" % (field_id,name)
+   print "%s -> %s" % (field_id,name)
 
-         # TODO Handle required, default values, multiples etc
-         # TODO Pull this logic out so that Aspects can re-use it
+   # TODO Handle required, default values, multiples etc
+   # TODO Pull this logic out so that Aspects can re-use it
 
-         # TODO Change it so that the Aspect fields (properties) are
-         #  added at the model level to Aspects, but Share level for
-         #  the form/task
+   # TODO Change it so that the Aspect fields (properties) are
+   #  added at the model level to Aspects, but Share level for
+   #  the form/task
 
-         if alf_type:
-            model.write("         <property name=\"%s\">\n" % alf_id)
-            if name:
-               model.write("           <title>%s</title>\n" % name)
-            model.write("           <type>%s</type>\n" % alf_type)
-            if ftype == "readonly-text":
-               model.write("           <default>%s</default>\n" % field.get("value",""))
-            if options:
-               model.write("           <constraints>\n")
-               model.write("             <constraint type=\"LIST\">\n")
-               model.write("               <parameter name=\"allowedValues\"><list>\n")
-               for opt in options:
-                  model.write("                 <value>%s</value>\n" % opt["name"])
-               model.write("               </list></parameter>\n")
-               model.write("             </constraint>\n")
-               model.write("           </constraints>\n")
-            model.write("         </property>\n")
-         if assoc_types.has_key(ftype):
-            model.associations.append((alf_id,name,assoc_types.get(ftype)))
+   if alf_type:
+      model.write("         <property name=\"%s\">\n" % alf_id)
+      if name:
+         model.write("           <title>%s</title>\n" % name)
+      model.write("           <type>%s</type>\n" % alf_type)
+      if ftype == "readonly-text":
+         model.write("           <default>%s</default>\n" % field.get("value",""))
+      if options:
+         model.write("           <constraints>\n")
+         model.write("             <constraint type=\"LIST\">\n")
+         model.write("               <parameter name=\"allowedValues\"><list>\n")
+         for opt in options:
+            model.write("                 <value>%s</value>\n" % opt["name"])
+         model.write("               </list></parameter>\n")
+         model.write("             </constraint>\n")
+         model.write("           </constraints>\n")
+      model.write("         </property>\n")
+   if assoc_types.has_key(ftype):
+      model.associations.append((alf_id,name,assoc_types.get(ftype)))
 
 def field_to_share(field):
-         field_id, alf_id, name = build_field_ids(field)
-         ftype, alf_type, options = build_field_type(field)
+   field_id, alf_id, name = build_field_ids(field)
+   ftype, alf_type, options = build_field_type(field)
 
-         # Record the Share "field-visibility" for this
-         share_form.record_visibility(alf_id)
+   # Record the Share "field-visibility" for this
+   share_form.record_visibility(alf_id)
 
-         # Record the appearance details
-         appearance = "<field id=\"%s\"" % alf_id
-         if name:
-            appearance += " label=\"%s\"" % name
-         appearance += ">\n"
+   # Record the appearance details
+   appearance = "<field id=\"%s\"" % alf_id
+   if name:
+      appearance += " label=\"%s\"" % name
+   appearance += ">\n"
 
-         if ftype == "readonly-text":
-             appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
-             appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
-             appearance += "  </control>\n"
-         if ftype in ("radio-buttons","dropdown") and options:
-             appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
-             appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
-             appearance += "  </control>\n"
+   if ftype == "readonly-text":
+       appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
+       appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+       appearance += "  </control>\n"
+   if ftype in ("radio-buttons","dropdown") and options:
+       appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
+       appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
+       appearance += "  </control>\n"
 
-         appearance += "</field>\n"
-         share_form.record_appearance(appearance)
-         # TODO Use this to finish getting and handling the other options
-         #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+   appearance += "</field>\n"
+   share_form.record_appearance(appearance)
+   # TODO Use this to finish getting and handling the other options
+   #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 # Finds the child fields of a form / container field

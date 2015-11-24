@@ -112,7 +112,7 @@ class ModelOutput(Output):
       self._end()
       self.out.write("    </type>\n")
 
-   def start_aspect(self, todo):
+   def start_aspect(self, name):
       if self.to_close == "types":
          self.to_close = "aspects"
          self.out.write("""
@@ -121,9 +121,9 @@ class ModelOutput(Output):
   <aspects>
 """)
       self.out.write("\n")
-      self.out.write("    <aspect name=\"%s\">\n" % "TODO")
+      self.out.write("    <aspect name=\"%s\">\n" % name)
       self._start()
-   def end_aspect(self, todo):
+   def end_aspect(self):
       self._end()
       self.out.write("    </aspect>\n")
 

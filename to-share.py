@@ -131,7 +131,7 @@ def field_to_model(field):
    field_id, alf_id, name = build_field_ids(field)
    ftype, alf_type, options = build_field_type(field)
 
-   print "%s -> %s" % (field_id,name)
+   print " %s -> %s" % (field_id,name)
 
    # TODO Handle required, default values, multiples etc
    # TODO Pull this logic out so that Aspects can re-use it
@@ -262,12 +262,32 @@ for form in forms:
          form_fields[f["id"]] = {"field":f,"forms":[]}
       form_fields[f["id"]]["forms"].append(form)
 
+_tmp_aspects = {}
 for field_id in form_fields.keys():
-   if len(form_fields[field_id]["forms"]) > 1:
-      # TODO Re-write as an aspect
-      print "TODO: Aspect needed for %s of %s" % (field_id, ",".join([f.form_id for f in form_fields[field_id]["forms"]]))
-# TODO Minimum set of aspects
+   field_forms = form_fields[field_id]["forms"]
+   if len(field_forms) > 1:
+      field = form_fields[field_id]["field"]
+      wanted_by = ",".join([f.form_id for f in form_fields[field_id]["forms"]])
+      details = {"field":field, "field_id":field_id, "forms": field_forms}
+      if not _tmp_aspects.has_key(wanted_by):
+         _tmp_aspects[wanted_by] = []
+      _tmp_aspects[wanted_by].append(details)
+
 aspects = []
+for wb in _tmp_aspects.keys():
+   aspect_id = len(aspects)
+   aspect_name = "%s:Aspect%d" % (namespace, aspect_id)
+   details = {"id":aspect_id, "name":aspect_name, "fields":[]}
+   print ""
+   print "Aspect %d needed as %s" % (aspect_id, wb)
+
+   for fd in _tmp_aspects[wb]:
+      print " - %s" % fd["field_id"]
+      details["fields"].append(fd["field"])
+      # TODO Remove this field from the current forms
+   for form in _tmp_aspects[wb][0]["forms"]:
+      form.aspects.append(details)
+   aspects.append(details)
 
 
 # Process the forms in turn
@@ -292,6 +312,7 @@ for form in forms:
 
    # Process Share config for any aspect-held fields
    for aspect in form.aspects:
+     print " Adding aspect references for %s" % (aspect["name"])
      for field in aspect["fields"]:
        field_to_share(field)
 
@@ -301,12 +322,13 @@ for form in forms:
    share_form.write_out(is_start_task, False)
 
 # Output the aspect definitions to the model
-# TODO Aspect IDs
 for aspect in aspects:
-   model.start_aspect("TODO")
+   print ""
+   print "Processing aspect %s for %s" % (aspect["id"],aspect["name"])
+   model.start_aspect(aspect["name"])
    for field in aspect["fields"]:
       field_to_model(field)
-   model.end_aspect("TODO")
+   model.end_aspect()
 
 ##########################################################################
 

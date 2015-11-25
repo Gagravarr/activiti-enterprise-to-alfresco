@@ -51,7 +51,7 @@ Where:
 This will generate in the output directory four files:
  * module-context.xml - Context file to deploy the model and workflow, 
                  tweak the names and paths within this for your project
- * model.xml   - Alfresco Model for the workflow form values
+ * model.xml   - Alfresco Model (Types+Aspects) for the workflow form values
  * share.xml   - Share Custom Config with the form definitions in
  * FIXME.bpmn20.xml - Updated BPMN workflow definition
 

@@ -113,7 +113,6 @@ def build_field_type(field):
 
    return (ftype, alf_type, options)
 
-# TODO Handle recursion for the share config bits
 def handle_fields(fields, share_form):
    for field in fields:
       # Is this a normal field, or a container with children?
@@ -134,7 +133,6 @@ def field_to_model(field):
    print " %s -> %s" % (field_id,name)
 
    # TODO Handle required, default values, multiples etc
-   # TODO Pull this logic out so that Aspects can re-use it
 
    if alf_type:
       model.write("         <property name=\"%s\">\n" % alf_id)
@@ -213,6 +211,7 @@ def get_all_child_fields(form):
 
 
 # Load the forms into memory, so we can pre-process stuff
+# TODO Add a way to track aspect fields
 class Form(object):
    def __init__(self, form_num, form_elem):
       self.form_elem = form_elem
@@ -224,6 +223,7 @@ class Form(object):
       self.form_id = form_elem.get("id","(n/a)")
       self.form_title = form_elem.attrib.get("name",None)
       self.aspects = []
+      # TODO Track aspect fields? Or provide an easy lookup anyway
 
    def update_form_id(self):
       self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)

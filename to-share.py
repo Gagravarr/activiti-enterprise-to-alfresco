@@ -255,41 +255,48 @@ for form_num in range(len(form_refs)):
 
 ## Detect forms with the same elements in them, and do those as an Aspect
 # Work out which fields are used in multiple forms
-## TODO Track the field forms, so we can nobble them
 form_fields = {}
 for form in forms:
    fields = get_all_child_fields(form)
    for f in fields:
-      if not form_fields.has_key(f["id"]):
-         form_fields[f["id"]] = {"field":f,"forms":[]}
-      form_fields[f["id"]]["forms"].append(form)
+      field_id = f["id"]
+      if not form_fields.has_key(field_id):
+         form_fields[field_id] = {}
+      form_fields[field_id][form] = f
 
 class Aspect(object):
    def __init__(self, aspect_id, forms):
       self.aspect_id = aspect_id
       self.name = "%s:Aspect%d" % (namespace, aspect_id)
       self.fields = []
+      self.field_ids = []
       self.forms = forms
       for form in forms:
          form.aspects.append(self)
    def add_field(self, field_id, field):
-      self.fields.append(field)
-      # TODO Nobble the field definitions on the forms
+      # Record only the first instance of a field for model use
+      if not field_id in self.field_ids:
+         self.fields.append(field)
+         self.field_ids.append(field_id)
+      # Always nobble the defintion on the form
+      field["on-aspect"] = self
 
 # Group the fields by forms using them
 aspects = []
 _tmp_aspects = {}
 for field_id in form_fields.keys():
-   field_forms = form_fields[field_id]["forms"]
+   field_forms = form_fields[field_id].keys()
    if len(field_forms) > 1:
-      field = form_fields[field_id]["field"]
       wanted_by = ",".join([f.form_id for f in field_forms])
       if not _tmp_aspects.has_key(wanted_by):
          aspect = Aspect(len(aspects), field_forms)
          _tmp_aspects[wanted_by] = aspect
          aspects.append(aspect)
-      _tmp_aspects[wanted_by].add_field(field_id, field)
+      for form in field_forms:
+         field = form_fields[field_id][form]
+         _tmp_aspects[wanted_by].add_field(field_id, field)
 
+# Rpeort what Aspects we've built
 for wb, aspect in _tmp_aspects.items():
    print ""
    print "Aspect %d needed by %d forms, with %d fields" % \

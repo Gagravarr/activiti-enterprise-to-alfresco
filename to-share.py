@@ -123,14 +123,20 @@ def handle_fields(fields, share_form):
          handle_fields(child_fields, share_form)
       else:
          # Handle the form field
-         field_to_model(field)
+         field_to_model(field, True)
          field_to_share(field)
 
-def field_to_model(field):
+def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
    ftype, alf_type, options = build_field_type(field)
 
    print " %s -> %s" % (field_id,name)
+
+   # If it's an Aspect field, and we're currently working
+   #  on a Form, then skip adding it to the model - done later
+   if as_form and field.has_key("on-aspect"):
+      print "    Via aspect %s" % field["on-aspect"].name
+      return
 
    # TODO Handle required, default values, multiples etc
 
@@ -211,7 +217,6 @@ def get_all_child_fields(form):
 
 
 # Load the forms into memory, so we can pre-process stuff
-# TODO Add a way to track aspect fields
 class Form(object):
    def __init__(self, form_num, form_elem):
       self.form_elem = form_elem
@@ -223,7 +228,6 @@ class Form(object):
       self.form_id = form_elem.get("id","(n/a)")
       self.form_title = form_elem.attrib.get("name",None)
       self.aspects = []
-      # TODO Track aspect fields? Or provide an easy lookup anyway
 
    def update_form_id(self):
       self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)
@@ -307,6 +311,8 @@ for wb, aspect in _tmp_aspects.items():
 for form in forms:
    print ""
    print "Processing form %s for %s / %s" % (form.form_ref, form.tag_name, form.form_id)
+   for aspect in form.aspects:
+     print " Uses Aspect %s" % (aspect.name)
 
    # Update the form ID on the workflow
    form.update_form_id()
@@ -323,14 +329,6 @@ for form in forms:
    handle_fields(get_child_fields(form), share_form)
    model.end_type(form)
 
-   # Process Share config for any aspect-held fields
-   for aspect in form.aspects:
-     print " Adding aspect references for %s" % (aspect.name)
-     for field in aspect.fields:
-       field_to_share(field)
-       # TODO Remove this when aspect fields are skipped on form model
-       print "WARNING: Field duplicated on model: %s" % build_field_ids(field)[0]
-
    # Do the Share Config conversion + output
    if is_start_task:
       share_form.write_out(True, True)
@@ -342,7 +340,7 @@ for aspect in aspects:
    print "Processing aspect %s for %s" % (aspect.aspect_id, aspect.name)
    model.start_aspect(aspect.name)
    for field in aspect.fields:
-      field_to_model(field)
+      field_to_model(field, False)
    model.end_aspect()
 
 ##########################################################################

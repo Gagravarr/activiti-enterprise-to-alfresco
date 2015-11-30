@@ -104,8 +104,9 @@ def build_field_type(field):
 
    # Check how to convert
    if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
+      fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
       print "Warning - unhandled type %s" % ftype
-      print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+      print json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
       ftype = "text"
 
    alf_type = property_types.get(ftype, None)

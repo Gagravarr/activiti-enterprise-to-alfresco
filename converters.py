@@ -198,14 +198,16 @@ class ShareFormConfigOutput(object):
       self.process_id = process_id
       self.form_ref = form_ref
 
+      self.custom_transitions = False
       self.visabilities = []
       self.appearances = []
-      self.custom_transitions = []
 
    def record_visibility(self, vis):
       self.visabilities.append(vis)
    def record_appearance(self, app):
       self.appearances.append(app)
+   def record_custom_transitions(self):
+      self.custom_transitions = True
 
    def write_out(self, is_start=False, as_start=False):
       share_config = self.share_config

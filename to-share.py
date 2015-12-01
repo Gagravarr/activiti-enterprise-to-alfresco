@@ -139,9 +139,22 @@ def handle_fields(fields, share_form):
          field_to_model(field, True)
          field_to_share(field)
 
-def handle_outcomes(outcomes, share_form):
-   # TODO Implement
-   print outcomes
+def handle_outcomes(outcomes, form, share_form):
+   if not outcomes:
+      return
+   if len(outcomes) == 1:
+      outcome = outcomes[0]
+      name = outcome.get("name")
+      if not outcome.get("id") and name in transition_default_names:
+         return
+   # Fake it into a Field
+   outcome_id = "%sOutcome" % form.form_new_ref.split(":")[1]
+   field = {"id":outcome_id, "name":"Outcome for Form %d" % form.form_num,
+            "type":"text", "transition":True, "options":outcomes}
+   # Have the Model and Share bits generated
+   field_to_model(field, True)
+   field_to_share(field)
+   # TODO Register it for a BPMN fixer
 
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
@@ -200,11 +213,14 @@ def field_to_share(field):
        appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
        appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
        appearance += "  </control>\n"
+   if field.get("transition", False):
+       appearance += "  <control template=\"/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl\" />\n"
+       share_form.record_custom_transitions()
 
    appearance += "</field>\n"
    share_form.record_appearance(appearance)
    # TODO Use this to finish getting and handling the other options
-   #print json.dumps(field, sort_keys=True, indent=4, separators=(',', ': '))
+   #print _field_to_json(field)
 
 
 # Finds the child fields of a form / container field
@@ -346,7 +362,7 @@ for form in forms:
    # Process as a type
    model.start_type(form)
    handle_fields(get_child_fields(form), share_form)
-   handle_outcomes(form.json.get("outcomes",[]), share_form)
+   handle_outcomes(form.json.get("outcomes",[]), form, share_form)
    model.end_type(form)
 
    # Do the Share Config conversion + output

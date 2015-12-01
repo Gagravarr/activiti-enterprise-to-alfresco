@@ -304,16 +304,26 @@ class DueDateFixer(BPMNFixer):
 DueDateFixer()
 
 class OutcomeFixer(BPMNFixer):
+   outcomes = {}
    def __init__(self):
       BPMNFixer.__init__(self,"{%s}conditionExpression"%bpmn20_ns,None)
+
+   @classmethod
+   def register_outcome(cls, form_ref, outcome_prop):
+      cls.outcomes[form_ref] = outcome_prop
 
    def fix_for_tag(self, tag):
       otype = tag.get("{%s}type" % xsi_ns)
       if otype == "tFormalExpression":
          exp = tag.text
-         if exp.startswith("${form") and "outcome" in exp:
-            print ""
-            print "WARNING: Activiti-online only outcome found"
-            print "   %s" % exp
-            # TODO Fix it
+         for form_id,alf_prop in OutcomeFixer.outcomes.items():
+            aoe = "${form" + form_id + "outcome"
+            if exp.startswith(aoe):
+               act_prop = alf_prop.replace(":","_")
+               repl = exp.replace(aoe, "${%s"%act_prop)
+               tag.text = repl
+               return
+         print ""
+         print "WARNING: Activiti-online only sequence condition found"
+         print "   %s" % exp
 OutcomeFixer()

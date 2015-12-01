@@ -148,13 +148,15 @@ def handle_outcomes(outcomes, form, share_form):
       if not outcome.get("id") and name in transition_default_names:
          return
    # Fake it into a Field
-   outcome_id = "%sOutcome" % form.form_new_ref.split(":")[1]
+   outcome_prop = "%sOutcome" % form.form_new_ref
+   outcome_id = outcome_prop.split(":")[1]
    field = {"id":outcome_id, "name":"Outcome for Form %d" % form.form_num,
             "type":"text", "transition":True, "options":outcomes}
    # Have the Model and Share bits generated
    field_to_model(field, True)
    field_to_share(field)
-   # TODO Register it for a BPMN fixer
+   # Register it for a BPMN fixer
+   OutcomeFixer.register_outcome(form.form_ref, outcome_prop)
 
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
@@ -222,6 +224,7 @@ def field_to_share(field):
    # TODO Use this to finish getting and handling the other options
    #print _field_to_json(field)
 
+##########################################################################
 
 # Finds the child fields of a form / container field
 def get_child_fields(container):
@@ -291,6 +294,7 @@ for form_num in range(len(form_refs)):
    # Record this completed form
    forms.append( form )
 
+##########################################################################
 
 ## Detect forms with the same elements in them, and do those as an Aspect
 # Work out which fields are used in multiple forms
@@ -341,6 +345,7 @@ for wb, aspect in _tmp_aspects.items():
    print "Aspect %d needed by %d forms, with %d fields" % \
          (aspect.aspect_id, len(aspect.forms), len(aspect.fields))
 
+##########################################################################
 
 # Process the forms in turn
 for form in forms:

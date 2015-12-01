@@ -35,3 +35,5 @@ property_types = {
 assoc_types = {
    "people": [False,False,"cm:person",False,False],
 }
+# Ones where field -> params -> field holds type information
+type_nested_in_params = ["readonly"]

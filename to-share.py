@@ -102,17 +102,29 @@ def build_field_ids(field):
 def build_field_type(field):
    ftype = field["type"]
 
+   # If type is "readonly", ensure the read only flag is properly set
+   if ftype == "readonly":
+      field["readOnly"] = True
+
+   # Is it one where the type information is nested?
+   if ftype in type_nested_in_params:
+      ftype = field["params"]["field"]["type"]
+
    # Check how to convert
    if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
-      fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
       print "Warning - unhandled type %s" % ftype
-      print json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
+      print _field_to_json(field)
       ftype = "text"
 
    alf_type = property_types.get(ftype, None)
    options = field.get("options",None)
 
    return (ftype, alf_type, options)
+
+def _field_to_json(field):
+   # Exclude bits we added onto the field
+   fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
+   return json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
 
 def handle_fields(fields, share_form):
    for field in fields:
@@ -172,6 +184,8 @@ def field_to_share(field):
    appearance = "<field id=\"%s\"" % alf_id
    if name:
       appearance += " label=\"%s\"" % name
+   if field.get("readOnly", False):
+      appearance += " read-only=\"true\""
    appearance += ">\n"
 
    if ftype == "readonly-text":

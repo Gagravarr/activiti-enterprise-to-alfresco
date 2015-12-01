@@ -83,6 +83,22 @@ Activiti-online style Due Dates are not supported, and will be ignored.
 At this time, column information in the form definition is discarded, and 
 the generated Share configuration is simply created with a single column.
 
+Using on Windows
+----------------
+This tool works fine on Windows, provided that a suitable Python runtime
+is present, and that the prompt running it supports UTF-8 when required.
+
+Many Activiti Online exported field definitions seem to make use of non-ASCII
+characters in field IDs, Names and Descriptions, including fancy quote
+characters. In order for the tool to be able to log these, it needs an
+output console / window / cmd prompt that supports those characters. Normally 
+that means one that's in UTF-8 mode.
+
+If you get errors about encodings when trying to run the program, try forcing
+your command prompt into UTF-8 mode by first running:
+   chcp 65001
+You might need to also switch your console font to "Lucida"
+
 Tutorials and References
 ------------------------
 Activiti Online:

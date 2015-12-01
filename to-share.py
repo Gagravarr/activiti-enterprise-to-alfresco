@@ -139,6 +139,10 @@ def handle_fields(fields, share_form):
          field_to_model(field, True)
          field_to_share(field)
 
+def handle_outcomes(outcomes, share_form):
+   # TODO Implement
+   print outcomes
+
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
    ftype, alf_type, options = build_field_type(field)
@@ -342,6 +346,7 @@ for form in forms:
    # Process as a type
    model.start_type(form)
    handle_fields(get_child_fields(form), share_form)
+   handle_outcomes(form.json.get("outcomes",[]), share_form)
    model.end_type(form)
 
    # Do the Share Config conversion + output

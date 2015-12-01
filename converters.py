@@ -200,6 +200,7 @@ class ShareFormConfigOutput(object):
 
       self.visabilities = []
       self.appearances = []
+      self.custom_transitions = []
 
    def record_visibility(self, vis):
       self.visabilities.append(vis)
@@ -233,7 +234,7 @@ class ShareFormConfigOutput(object):
       if not as_start:
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:taskId")
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:status")
-      if not is_start:
+      if not is_start and not self.custom_transitions:
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "transitions")
       share_config.write(default_indent+"</field-visibility>\n")
 
@@ -242,7 +243,7 @@ class ShareFormConfigOutput(object):
          # Output as-is with indent
          for l in [x for x in app.split("\n") if x]:
             share_config.write("%s  %s\n" % (default_indent,l))
-      if not is_start:
+      if not is_start and not self.custom_transitions:
          share_config.write(default_indent+"  <field id=\"transitions\"/>\n")
       share_config.write(default_indent+"</appearance>\n")
 
@@ -299,3 +300,20 @@ class DueDateFixer(BPMNFixer):
          print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
          task.attrib.pop(self.attr)
 DueDateFixer()
+
+# TODO Change something like 
+#   ${form969363outcome == 'Complete'}
+# Into something driven from the Workflow model
+#class OutcomeFixer(BPMNFixer):
+#   def __init__(self):
+#      BPMNFixer.__init__(self,None,"{%s}conditionExpression" % activiti_ns)
+#
+#   def fix_for_attr(self, task, due_date):
+#      if "${taskDueDateBean" in due_date:
+#         tag = task.tag.replace("{%s}"%activiti_ns,"").replace("{%s}"%bpmn20_ns,"")
+#         print ""
+#         print "WARNING: Activiti-online only Due Date found"
+#         print "   %s" % due_date
+#         print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
+#         task.attrib.pop(self.attr)
+#OutcomeFixer()

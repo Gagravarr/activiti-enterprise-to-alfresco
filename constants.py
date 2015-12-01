@@ -1,6 +1,7 @@
 # These are various constants and mappings we rely on
 
 # Namespaces
+xsi_ns = 'http://www.w3.org/2001/XMLSchema-instance'
 bpmn20_ns = 'http://www.omg.org/spec/BPMN/20100524/MODEL'
 activiti_ns = 'http://activiti.org/bpmn'
 

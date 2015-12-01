@@ -35,7 +35,7 @@ class BPMNFixer(object):
    def fix_all(wf):
       for fixer in BPMNFixer.fixers:
          if fixer.tag:
-            tags = wf.findall("**/%s" % fixer.tag)
+            tags = wf.findall(".//%s" % fixer.tag)
             for tag in tags:
                fixer.fix_for_tag(tag)
          if fixer.attr:
@@ -303,19 +303,17 @@ class DueDateFixer(BPMNFixer):
          task.attrib.pop(self.attr)
 DueDateFixer()
 
-# TODO Change something like 
-#   ${form969363outcome == 'Complete'}
-# Into something driven from the Workflow model
-#class OutcomeFixer(BPMNFixer):
-#   def __init__(self):
-#      BPMNFixer.__init__(self,None,"{%s}conditionExpression" % activiti_ns)
-#
-#   def fix_for_attr(self, task, due_date):
-#      if "${taskDueDateBean" in due_date:
-#         tag = task.tag.replace("{%s}"%activiti_ns,"").replace("{%s}"%bpmn20_ns,"")
-#         print ""
-#         print "WARNING: Activiti-online only Due Date found"
-#         print "   %s" % due_date
-#         print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
-#         task.attrib.pop(self.attr)
-#OutcomeFixer()
+class OutcomeFixer(BPMNFixer):
+   def __init__(self):
+      BPMNFixer.__init__(self,"{%s}conditionExpression"%bpmn20_ns,None)
+
+   def fix_for_tag(self, tag):
+      otype = tag.get("{%s}type" % xsi_ns)
+      if otype == "tFormalExpression":
+         exp = tag.text
+         if exp.startswith("${form") and "outcome" in exp:
+            print ""
+            print "WARNING: Activiti-online only outcome found"
+            print "   %s" % exp
+            # TODO Fix it
+OutcomeFixer()

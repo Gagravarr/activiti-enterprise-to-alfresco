@@ -217,7 +217,7 @@ def field_to_share(field):
        appearance += "  </control>\n"
    if field.get("transition", False):
        appearance += "  <control template=\"/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl\" />\n"
-       share_form.record_custom_transitions()
+       share_form.record_custom_transition(alf_id)
 
    appearance += "</field>\n"
    share_form.record_appearance(appearance)

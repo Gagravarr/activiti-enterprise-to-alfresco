@@ -198,7 +198,7 @@ class ShareFormConfigOutput(object):
       self.process_id = process_id
       self.form_ref = form_ref
 
-      self.custom_transitions = False
+      self.custom_transitions = []
       self.visabilities = []
       self.appearances = []
 
@@ -206,8 +206,8 @@ class ShareFormConfigOutput(object):
       self.visabilities.append(vis)
    def record_appearance(self, app):
       self.appearances.append(app)
-   def record_custom_transitions(self):
-      self.custom_transitions = True
+   def record_custom_transition(self, field_id):
+      self.custom_transitions.append(field_id)
 
    def write_out(self, is_start=False, as_start=False):
       share_config = self.share_config
@@ -231,6 +231,9 @@ class ShareFormConfigOutput(object):
           # Convert for non-start as needed
           if not as_start and "bpm:assignee" == vis:
              vis = "taskOwner"
+          # Custom transitions must come last
+          if vis in self.custom_transitions:
+             continue
           # Output
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % vis)
       if not as_start:
@@ -238,6 +241,8 @@ class ShareFormConfigOutput(object):
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "bpm:status")
       if not is_start and not self.custom_transitions:
           share_config.write(default_indent+"  <show id=\"%s\" />\n" % "transitions")
+      for trnid in self.custom_transitions:
+          share_config.write(default_indent+"  <show id=\"%s\" />\n" % trnid)
       share_config.write(default_indent+"</field-visibility>\n")
 
       share_config.write(default_indent+"<appearance>\n")

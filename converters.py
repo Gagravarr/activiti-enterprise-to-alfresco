@@ -56,13 +56,10 @@ class BPMNFixer(object):
          listener.set("event",script_type)
          listener.set("class","org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener")
       # Add the real script
-      fscript = ET.SubElement(extlistener,"{%s}field"%activiti_ns)
+      fscript = ET.SubElement(listener,"{%s}field"%activiti_ns)
       fscript.set("name","script")
       fstring = ET.SubElement(fscript,"{%s}string"%activiti_ns)
       fstring.text = script
-      # Add a dummy script tag in the "wrong" place
-      emptyscript = ET.SubElement(task,"{%s}script"%bpmn20_ns)
-      emptyscript.text = "// No script here, run via an Execution listener"
 
 ##########################################################################
 
@@ -369,15 +366,10 @@ class ActivitiMailFixer(BPMNFixer):
             script += "mail.parameters.%s = '%s';\n" % (req_field, value)
       script += "mail.execute(bpm_package);\n"
 
-      # Add the script details
-      extlistener = ET.SubElement(extension,"{%s}executionListener"%activiti_ns)
-      extlistener.set("event","start")
-      extlistener.set("class","org.alfresco.repo.workflow.activiti.listener.ScriptExecutionListener")
-      fscript = ET.SubElement(extlistener,"{%s}field"%activiti_ns)
-      fscript.set("name","script")
-      fstring = ET.SubElement(fscript,"{%s}string"%activiti_ns)
-      fstring.text = script
-      emptyscript = ET.SubElement(task,"{%s}script"%bpmn20_ns)
+      # Add the mailing script to the BPMN
+      BPMNFixer.add_script(extension, "start", script)
+      # Add a dummy script tag in the "wrong" place
+      emptyscript = ET.SubElement(task, "{%s}script"%bpmn20_ns)
       emptyscript.text = "// No script here, run via an Execution listener"
 ActivitiMailFixer()
 
@@ -421,7 +413,7 @@ class TaskToExecutionFixer(object):
       script = "//TODO Set properties"
 
       # Add the extension element if needed
-      ee = task_tag.findAll(cls.extensionElements)
+      ee = task_tag.findall(cls.extensionElements)
       if ee:
          extension = ee[0]
       else:
@@ -435,7 +427,6 @@ class TaskToExecutionFixer(object):
       # Add the script
       BPMNFixer.add_script(extension, script_type, script)
 
-      extension = task.findall("{%s}extensionElements"%bpmn20_ns)[0]
       print "TODO"
       print task_tag
       print property_ids

@@ -347,11 +347,13 @@ class ActivitiMailFixer(BPMNFixer):
       # Add the script details
       extlistener = ET.SubElement(extension,"{%s}executionListener"%activiti_ns)
       extlistener.set("event","start")
-      extlistener.set("class","org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener")
+      extlistener.set("class","org.alfresco.repo.workflow.activiti.listener.ScriptExecutionListener")
       fscript = ET.SubElement(extlistener,"{%s}field"%activiti_ns)
       fscript.set("name","script")
       fstring = ET.SubElement(fscript,"{%s}string"%activiti_ns)
       fstring.text = script
+      emptyscript = ET.SubElement(task,"{%s}script"%bpmn20_ns)
+      emptyscript.text = "// No script here, run via an Execution listener"
 ActivitiMailFixer()
 
 class OutcomeFixer(BPMNFixer):

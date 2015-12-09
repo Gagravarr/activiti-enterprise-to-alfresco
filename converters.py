@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ET
 from constants import *
 
 ##########################################################################
@@ -307,6 +308,51 @@ class DueDateFixer(BPMNFixer):
          print "The due date for %s / %s will be removed" % (tag, task.get("id","n/a"))
          task.attrib.pop(self.attr)
 DueDateFixer()
+
+class ActivitiMailFixer(BPMNFixer):
+   """
+   Alfrecso doesn't override/customise the Activiti MailActivityBehavior.
+   To avoid mailing issues, we need to re-write Activiti mail service tasks
+    into Alfresco mail actions
+   """
+   type_attr = "{%s}type"%activiti_ns
+   field_mappings = {"to":"to","from":"from","subject":"subject","text":"text"}
+   def __init__(self):
+      BPMNFixer.__init__(self,"{%s}serviceTask"%bpmn20_ns,None)
+   def fix_for_tag(self, task):
+      if not task.get(ActivitiMailFixer.type_attr) == "mail":
+         return
+      extension = task.findall("{%s}extensionElements"%bpmn20_ns)[0]
+
+      # Change it to a script task
+      task.tag = "{%s}scriptTask"%bpmn20_ns
+      task.set("scriptFormat","javascript")
+      task.attrib.pop(ActivitiMailFixer.type_attr)
+
+      # Build the script for mailing, and remove the Activiti fields
+      script = "var mail = actions.create('mail');\n"
+      for field in extension.findall("{%s}field" % activiti_ns):
+         ftype = field.get("name")
+         if ActivitiMailFixer.field_mappings.has_key(ftype):
+            alftype = ActivitiMailFixer.field_mappings[ftype]
+            value = field.findall("{%s}string"%activiti_ns)[0].text
+            script += "mail.parameters.%s = '%s';\n" % (alftype,value)
+         else:
+            print ""
+            print "WARNING: Unknown Activiti-online mail field found"
+            print "   %s" % exp
+         extension.remove(field)
+      script += "mail.execute(bpm_package);\n"
+
+      # Add the script details
+      extlistener = ET.SubElement(extension,"{%s}executionListener"%activiti_ns)
+      extlistener.set("event","start")
+      extlistener.set("class","org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener")
+      fscript = ET.SubElement(extlistener,"{%s}field"%activiti_ns)
+      fscript.set("name","script")
+      fstring = ET.SubElement(fscript,"{%s}string"%activiti_ns)
+      fstring.text = script
+ActivitiMailFixer()
 
 class OutcomeFixer(BPMNFixer):
    outcomes = {}

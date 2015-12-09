@@ -44,6 +44,25 @@ class BPMNFixer(object):
             for tag in tags:
                attr_val = tag.get(fixer.attr)
                fixer.fix_for_attr(tag, attr_val)
+   @staticmethod
+   def add_script(ext_elem_tag, script_type, script):
+      # Add the appropriate listener
+      if script_type == "start":
+         listener = ET.SubElement(ext_elem_tag,"{%s}executionListener"%activiti_ns)
+         listener.set("event","start")
+         listener.set("class","org.alfresco.repo.workflow.activiti.listener.ScriptExecutionListener")
+      else:
+         listener = ET.SubElement(ext_elem_tag,"{%s}taskListener"%activiti_ns)
+         listener.set("event",script_type)
+         listener.set("class","org.alfresco.repo.workflow.activiti.tasklistener.ScriptTaskListener")
+      # Add the real script
+      fscript = ET.SubElement(extlistener,"{%s}field"%activiti_ns)
+      fscript.set("name","script")
+      fstring = ET.SubElement(fscript,"{%s}string"%activiti_ns)
+      fstring.text = script
+      # Add a dummy script tag in the "wrong" place
+      emptyscript = ET.SubElement(task,"{%s}script"%bpmn20_ns)
+      emptyscript.text = "// No script here, run via an Execution listener"
 
 ##########################################################################
 
@@ -394,8 +413,29 @@ class TaskToExecutionFixer(object):
    So, for those we know will need it, explicitly copy the values from
    the task scope to the execution scope, so they can be used
    """
+   extensionElements = "{%s}extensionElements"%bpmn20_ns
    @classmethod
    def fix(cls, task_tag, property_ids):
+      # Build the script
+      # TODO
+      script = "//TODO Set properties"
+
+      # Add the extension element if needed
+      ee = task_tag.findAll(cls.extensionElements)
+      if ee:
+         extension = ee[0]
+      else:
+         extension = ET.SubElement(task_tag, cls.extensionElements)
+
+      # Work out the script type
+      script_type = "complete"
+      if task_tag.tag == start_task:
+         script_type = "start"
+
+      # Add the script
+      BPMNFixer.add_script(extension, script_type, script)
+
+      extension = task.findall("{%s}extensionElements"%bpmn20_ns)[0]
       print "TODO"
       print task_tag
       print property_ids

@@ -155,8 +155,9 @@ def handle_outcomes(outcomes, form, share_form):
    # Have the Model and Share bits generated
    field_to_model(field, True)
    field_to_share(field)
-   # Register it for a BPMN fixer
+   # Register it for BPMN Fixings
    OutcomeFixer.register_outcome(form.form_ref, outcome_prop)
+   form.outcomes.append(outcome_prop)
 
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
@@ -266,10 +267,25 @@ class Form(object):
       self.form_id = form_elem.get("id","(n/a)")
       self.form_title = form_elem.attrib.get("name",None)
       self.aspects = []
+      self.outcomes = []
 
    def update_form_id(self):
       self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)
       self.form_elem.set("{%s}formKey" % activiti_ns, self.form_new_ref)
+
+   def task_vars_to_execution(self):
+      # List of Property IDs to copy over
+      to_set = []
+      # Any Custom Outcomes need doing
+      to_set.extend( self.outcomes )
+      # As do any writable aspect properties
+      # TODO Filter out fields which are read-only on this form
+      for aspect in self.aspects:
+         for field in aspect.fields:
+            to_set.append( build_field_ids(field)[1] )
+      # Have the BPMN updated for these
+      if to_set:
+         TaskToExecutionFixer.fix(self.form_elem, to_set)
 
    def load_json(self):
       # Locate the JSON for it
@@ -374,6 +390,10 @@ for form in forms:
    if is_start_task:
       share_form.write_out(True, True)
    share_form.write_out(is_start_task, False)
+
+   # If the form has any writable aspect fields, or has custom outcomes,
+   #  have those copied from the task to the execution scope
+   form.task_vars_to_execution()
 
 # Output the aspect definitions to the model
 for aspect in aspects:

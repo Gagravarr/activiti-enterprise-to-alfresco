@@ -386,3 +386,16 @@ class OutcomeFixer(BPMNFixer):
          print "WARNING: Activiti-online only sequence condition found"
          print "   %s" % exp
 OutcomeFixer()
+
+class TaskToExecutionFixer(object):
+   """
+   Annoyingly, in most cases, Activiti under Alfresco won't make the
+   task object available when scripts and expressions run
+   So, for those we know will need it, explicitly copy the values from
+   the task scope to the execution scope, so they can be used
+   """
+   @classmethod
+   def fix(cls, task_tag, property_ids):
+      print "TODO"
+      print task_tag
+      print property_ids

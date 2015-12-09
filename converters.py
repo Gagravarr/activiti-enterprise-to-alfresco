@@ -317,6 +317,7 @@ class ActivitiMailFixer(BPMNFixer):
    """
    type_attr = "{%s}type"%activiti_ns
    field_mappings = {"to":"to","from":"from","subject":"subject","text":"text"}
+   defaults = {"subject":"Activiti Workflow Task"}
    def __init__(self):
       BPMNFixer.__init__(self,"{%s}serviceTask"%bpmn20_ns,None)
    def fix_for_tag(self, task):
@@ -331,8 +332,10 @@ class ActivitiMailFixer(BPMNFixer):
 
       # Build the script for mailing, and remove the Activiti fields
       script = "var mail = actions.create('mail');\n"
+      done_fields = []
       for field in extension.findall("{%s}field" % activiti_ns):
          ftype = field.get("name")
+         done_fields.append("field")
          if ActivitiMailFixer.field_mappings.has_key(ftype):
             alftype = ActivitiMailFixer.field_mappings[ftype]
             value = field.findall("{%s}string"%activiti_ns)[0].text
@@ -342,6 +345,9 @@ class ActivitiMailFixer(BPMNFixer):
             print "WARNING: Unknown Activiti-online mail field found"
             print "   %s" % exp
          extension.remove(field)
+      for req_field, value in ActivitiMailFixer.defaults.items():
+         if not req_field in done_fields:
+            script += "mail.parameters.%s = '%s';\n" % (req_field, value)
       script += "mail.execute(bpm_package);\n"
 
       # Add the script details

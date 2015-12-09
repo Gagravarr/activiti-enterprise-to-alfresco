@@ -409,8 +409,11 @@ class TaskToExecutionFixer(object):
    @classmethod
    def fix(cls, task_tag, property_ids):
       # Build the script
-      # TODO
-      script = "//TODO Set properties"
+      script = "\n"
+      for alf_prop in property_ids:
+         act_prop = alf_prop.replace(":","_")
+         script += "execution.setVariable('%s', task.getVariable('%s'));\n" % \
+                   (act_prop, act_prop)
 
       # Add the extension element if needed
       ee = task_tag.findall(cls.extensionElements)

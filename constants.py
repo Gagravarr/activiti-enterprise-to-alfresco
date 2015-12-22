@@ -7,6 +7,7 @@ activiti_ns = 'http://activiti.org/bpmn'
 
 xml_namespaces = { 
   '':bpmn20_ns, 'activiti':activiti_ns,
+  'modeler':'http://activiti.com/modeler',
   'bpmndi':'http://www.omg.org/spec/BPMN/20100524/DI',
   'omgdc':'http://www.omg.org/spec/DD/20100524/DC',
   'omgdi':'http://www.omg.org/spec/DD/20100524/DI',

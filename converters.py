@@ -429,7 +429,3 @@ class TaskToExecutionFixer(object):
 
       # Add the script
       BPMNFixer.add_script(extension, script_type, script)
-
-      print "TODO"
-      print task_tag
-      print property_ids

@@ -230,7 +230,8 @@ def field_to_share(field):
 # Finds the child fields of a form / container field
 def get_child_fields(container):
    if isinstance(container,Form):
-      return container.json["fields"]
+      json = container.json.get("editorJson", container.json)
+      return json["fields"]
    fields = []
    if container.get("fieldType","") == "ContainerRepresentation":
       for f in container["fields"]:

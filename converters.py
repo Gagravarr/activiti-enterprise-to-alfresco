@@ -307,7 +307,7 @@ class AssigneeFixer(BPMNFixer):
    def __init__(self):
       BPMNFixer.__init__(self,None,"{%s}assignee" % activiti_ns)
    def fix_for_attr(self, task, assignee):
-      if "${initiator}" == assignee:
+      if assignee in ("${initiator}","$INITIATOR"):
          task.set(self.attr, "${initiator.properties.userName}")
 AssigneeFixer()
 

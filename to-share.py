@@ -230,8 +230,7 @@ def field_to_share(field):
 # Finds the child fields of a form / container field
 def get_child_fields(container):
    if isinstance(container,Form):
-      json = container.json.get("editorJson", container.json)
-      return json["fields"]
+      return container.json["fields"]
    fields = []
    if container.get("fieldType","") == "ContainerRepresentation":
       for f in container["fields"]:
@@ -301,6 +300,9 @@ class Form(object):
          sys.exit(1)
       # Read the JSON from the zip
       self.json = json.loads(app.read(self.form_json_name))
+      # Newer Activiti exports put all the good bits in Editor JSON
+      if self.json.has_key("editorJson"):
+         self.json = self.json.get("editorJson")
 
 forms = []
 for form_num in range(len(form_refs)):

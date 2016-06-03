@@ -399,6 +399,7 @@ def build_field_type(field):
 
 def _field_to_json(field):
    # Exclude bits we added onto the field
+   import json
    fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
    return json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
 

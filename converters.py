@@ -266,22 +266,23 @@ class ShareFormConfigOutput(object):
       # Record the appearance details
       appearance = "<field id=\"%s\"" % alf_id
       if name:
-         appearance += " label=\"%s\"" % name
+         appearance += " label=\"%s\"" % escape(name)
       if field.get("readOnly", False):
          appearance += " read-only=\"true\""
       appearance += ">\n"
 
+      value = escape(field.get("value","") or "")
       if ftype == "readonly-text":
           appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
-          appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+          appearance += "    <control-param name=\"value\">%s</control-param>\n" % value
           appearance += "  </control>\n"
       if ftype == "multi-line-text":
           appearance += "  <control template=\"/org/alfresco/components/form/controls/textarea.ftl\">\n"
-          appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+          appearance += "    <control-param name=\"value\">%s</control-param>\n" % value
           appearance += "  </control>\n"
       if ftype in ("radio-buttons","dropdown") and options:
           appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
-          appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
+          appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([ escape(o["name"]) for o in options])
           appearance += "  </control>\n"
       if field.get("transition", False):
           appearance += "  <control template=\"/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl\" />\n"

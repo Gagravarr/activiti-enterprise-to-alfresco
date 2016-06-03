@@ -119,9 +119,10 @@ def build_field_type(field):
       ftype = "text"
 
    alf_type = property_types.get(ftype, None)
-   options = field.get("options",None)
+   required = field.get("required", False)
+   options = field.get("options", None)
 
-   return (ftype, alf_type, options)
+   return (ftype, alf_type, options, required)
 
 def _field_to_json(field):
    # Exclude bits we added onto the field
@@ -163,7 +164,7 @@ def handle_outcomes(outcomes, form, share_form):
 
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field)
-   ftype, alf_type, options = build_field_type(field)
+   ftype, alf_type, options, required = build_field_type(field)
 
    print " %s -> %s" % (field_id,name)
 
@@ -173,7 +174,7 @@ def field_to_model(field, as_form):
       print "    Via aspect %s" % field["on-aspect"].name
       return
 
-   # TODO Handle required, default values, multiples etc
+   # TODO Handle default values, multiples etc
 
    if alf_type:
       model.write("         <property name=\"%s\">\n" % alf_id)
@@ -182,6 +183,8 @@ def field_to_model(field, as_form):
       model.write("           <type>%s</type>\n" % alf_type)
       if ftype == "readonly-text":
          model.write("           <default>%s</default>\n" % field.get("value",""))
+      if required:
+         model.write("           <mandatory>true</mandatory>\n")
       if options:
          model.write("           <constraints>\n")
          model.write("             <constraint type=\"LIST\">\n")
@@ -197,7 +200,7 @@ def field_to_model(field, as_form):
 
 def field_to_share(field):
    field_id, alf_id, name = build_field_ids(field)
-   ftype, alf_type, options = build_field_type(field)
+   ftype, alf_type, options, required = build_field_type(field)
 
    # Record the Share "field-visibility" for this
    share_form.record_visibility(alf_id)

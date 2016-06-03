@@ -141,38 +141,7 @@ def field_to_model(field, as_form):
       model.convert_field(field)
 
 def field_to_share(field):
-   field_id, alf_id, name = build_field_ids(field, namespace)
-   ftype, alf_type, options, required = build_field_type(field)
-
-   # Record the Share "field-visibility" for this
-   share_form.record_visibility(alf_id)
-
-   # Record the appearance details
-   appearance = "<field id=\"%s\"" % alf_id
-   if name:
-      appearance += " label=\"%s\"" % name
-   if field.get("readOnly", False):
-      appearance += " read-only=\"true\""
-   appearance += ">\n"
-
-   if ftype == "readonly-text":
-       appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
-       appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
-       appearance += "  </control>\n"
-   if ftype == "multi-line-text":
-       appearance += "  <control template=\"/org/alfresco/components/form/controls/textarea.ftl\">\n"
-       appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
-       appearance += "  </control>\n"
-   if ftype in ("radio-buttons","dropdown") and options:
-       appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
-       appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
-       appearance += "  </control>\n"
-   if field.get("transition", False):
-       appearance += "  <control template=\"/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl\" />\n"
-       share_form.record_custom_transition(alf_id)
-
-   appearance += "</field>\n"
-   share_form.record_appearance(appearance)
+   share_form.convert_field(field)
    # TODO Use this to finish getting and handling the other options
    #print _field_to_json(field)
 

@@ -256,8 +256,39 @@ class ShareFormConfigOutput(object):
    def record_custom_transition(self, field_id):
       self.custom_transitions.append(field_id)
 
-   def record_field(self, field):
-      pass # TODO Bring over logic
+   def convert_field(self, field):
+      field_id, alf_id, name = build_field_ids(field, self.namespace)
+      ftype, alf_type, options, required = build_field_type(field)
+
+      # Record the Share "field-visibility" for this
+      self.record_visibility(alf_id)
+
+      # Record the appearance details
+      appearance = "<field id=\"%s\"" % alf_id
+      if name:
+         appearance += " label=\"%s\"" % name
+      if field.get("readOnly", False):
+         appearance += " read-only=\"true\""
+      appearance += ">\n"
+
+      if ftype == "readonly-text":
+          appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
+          appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+          appearance += "  </control>\n"
+      if ftype == "multi-line-text":
+          appearance += "  <control template=\"/org/alfresco/components/form/controls/textarea.ftl\">\n"
+          appearance += "    <control-param name=\"value\">%s</control-param>\n" % field.get("value","")
+          appearance += "  </control>\n"
+      if ftype in ("radio-buttons","dropdown") and options:
+          appearance += "  <control template=\"/org/alfresco/components/form/controls/selectone.ftl\">\n"
+          appearance += "    <control-param name=\"options\">%s</control-param>\n" % ",".join([o["name"] for o in options])
+          appearance += "  </control>\n"
+      if field.get("transition", False):
+          appearance += "  <control template=\"/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl\" />\n"
+          self.record_custom_transition(alf_id)
+
+      appearance += "</field>\n"
+      self.record_appearance(appearance)
 
    def write_out(self, is_start=False, as_start=False):
       share_config = self.share_config

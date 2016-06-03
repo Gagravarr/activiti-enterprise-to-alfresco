@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
 from constants import *
 
 ##########################################################################
@@ -101,7 +102,7 @@ class ModelOutput(Output):
          for assoc in self.associations:
             self.out.write("         <association name=\"%s\">\n" % assoc[0])
             if assoc[1]:
-               self.out.write("           <title>%s</title>\n" % assoc[1])
+               self.out.write("           <title>%s</title>\n" % escape(assoc[1]))
             self.out.write("           <source>\n")
             self.out.write("             <mandatory>%s</mandatory>\n" % str(assoc[2][0]).lower())
             self.out.write("             <many>%s</many>\n" % str(assoc[2][1]).lower())
@@ -120,7 +121,7 @@ class ModelOutput(Output):
       self.out.write("\n")
       self.out.write("    <type name=\"%s\">\n" % form.form_new_ref)
       if form.form_title:
-         self.out.write("       <title>%s</title>\n" % form.form_title)
+         self.out.write("       <title>%s</title>\n" % escape(form.form_title))
       self.out.write("       <parent>%s</parent>\n" % alf_task_type)
       self._start()
       self.aspects = form.aspects

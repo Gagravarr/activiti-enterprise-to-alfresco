@@ -250,13 +250,18 @@ for form in forms:
 
 class Aspect(object):
    def __init__(self, aspect_id, forms):
+      self._build_name(aspect_id)
       self.aspect_id = aspect_id
-      self.name = "%s:Aspect%d" % (namespace, aspect_id)
       self.fields = []
       self.field_ids = []
       self.forms = forms
       for form in forms:
          form.aspects.append(self)
+   def _build_name(self, aspect_id):
+      if not type(aspect_id) in (str,unicode):
+         aspect_id = "%d" % aspect_id
+      self.base_name = "Aspect%s" % aspect_id
+      self.name = "%s:%s" % (namespace, self.base_name)
    def add_field(self, field_id, field):
       # Record only the first instance of a field for model use
       if not field_id in self.field_ids:
@@ -281,12 +286,15 @@ for field_id in form_fields.keys():
          _tmp_aspects[wanted_by].add_field(field_id, field)
 
 # For the aspects with one field, try to give them a better name
-# TODO
+for aspect in aspects:
+   if len(aspect.fields) == 1:
+      field_id = build_field_ids(aspect.fields[0], namespace)[0]
+      aspect._build_name(field_id)
 
 # Report what Aspects we've built
 for wb, aspect in _tmp_aspects.items():
-   print "Aspect %d needed by %d forms, with %d fields" % \
-         (aspect.aspect_id, len(aspect.forms), len(aspect.fields))
+   print "Aspect %d needed by %d forms, with %d fields, called %s" % \
+         (aspect.aspect_id, len(aspect.forms), len(aspect.fields), aspect.base_name)
 
 ##########################################################################
 

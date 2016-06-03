@@ -70,6 +70,7 @@ class ModelOutput(Output):
       self.to_close = "types"
 
    def begin(self, model_name, namespace_uri, namespace):
+      self.namespace = namespace
       self.out.write("""<?xml version='1.0' encoding='UTF-8'?>
 <model xmlns='http://www.alfresco.org/model/dictionary/1.0' name='%s'>
   <version>1.0</version>
@@ -145,8 +146,8 @@ class ModelOutput(Output):
       self._end()
       self.out.write("    </aspect>\n")
 
-   def convert_field(self, field, namespace):
-      field_id, alf_id, name = build_field_ids(field, namespace)
+   def convert_field(self, field):
+      field_id, alf_id, name = build_field_ids(field, self.namespace)
       ftype, alf_type, options, required = build_field_type(field)
 
       # TODO Handle default values, multiples etc
@@ -238,10 +239,11 @@ class ShareConfigOutput(Output):
 
 class ShareFormConfigOutput(object):
    default_indent = "        "
-   def __init__(self, share_config, process_id, form_ref):
+   def __init__(self, share_config, process_id, form_ref, namespace):
       self.share_config = share_config
       self.process_id = process_id
       self.form_ref = form_ref
+      self.namespace = namespace
 
       self.custom_transitions = []
       self.visabilities = []
@@ -253,6 +255,9 @@ class ShareFormConfigOutput(object):
       self.appearances.append(app)
    def record_custom_transition(self, field_id):
       self.custom_transitions.append(field_id)
+
+   def record_field(self, field):
+      pass # TODO Bring over logic
 
    def write_out(self, is_start=False, as_start=False):
       share_config = self.share_config

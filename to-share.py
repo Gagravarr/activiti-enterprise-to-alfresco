@@ -138,7 +138,7 @@ def field_to_model(field, as_form):
       return
    else:
       # Convert to Property or Assoc
-      model.convert_field(field, namespace)
+      model.convert_field(field)
 
 def field_to_share(field):
    field_id, alf_id, name = build_field_ids(field, namespace)
@@ -332,7 +332,7 @@ for form in forms:
    alf_task_type, is_start_task = get_alfresco_task_types(form)
 
    # Prepare for the Share Config part
-   share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref)
+   share_form = ShareFormConfigOutput(share_config, process_id, form_new_ref, namespace)
 
    # Process as a type
    model.start_type(form)

@@ -3,6 +3,7 @@ import os, sys
 import json
 import zipfile
 import xml.etree.ElementTree as ET
+from collections import OrderedDict
 from constants import *
 from converters import *
 
@@ -232,6 +233,7 @@ for form_num in range(len(form_refs)):
    form.load_json()
    # Record this completed form
    forms.append( form )
+print ""
 
 ##########################################################################
 
@@ -265,7 +267,7 @@ class Aspect(object):
 
 # Group the fields by forms using them
 aspects = []
-_tmp_aspects = {}
+_tmp_aspects = OrderedDict()
 for field_id in form_fields.keys():
    field_forms = form_fields[field_id].keys()
    if len(field_forms) > 1:
@@ -278,9 +280,11 @@ for field_id in form_fields.keys():
          field = form_fields[field_id][form]
          _tmp_aspects[wanted_by].add_field(field_id, field)
 
-# Rpeort what Aspects we've built
+# For the aspects with one field, try to give them a better name
+# TODO
+
+# Report what Aspects we've built
 for wb, aspect in _tmp_aspects.items():
-   print ""
    print "Aspect %d needed by %d forms, with %d fields" % \
          (aspect.aspect_id, len(aspect.forms), len(aspect.fields))
 

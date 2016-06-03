@@ -145,6 +145,33 @@ class ModelOutput(Output):
       self._end()
       self.out.write("    </aspect>\n")
 
+   def convert_field(self, field, namespace):
+      field_id, alf_id, name = build_field_ids(field, namespace)
+      ftype, alf_type, options, required = build_field_type(field)
+
+      # TODO Handle default values, multiples etc
+      if alf_type:
+         self.write("         <property name=\"%s\">\n" % alf_id)
+         if name:
+            self.write("           <title>%s</title>\n" % name)
+         self.write("           <type>%s</type>\n" % alf_type)
+         if ftype == "readonly-text":
+            self.write("           <default>%s</default>\n" % field.get("value",""))
+         if required:
+            self.write("           <mandatory>true</mandatory>\n")
+         if options:
+            self.write("           <constraints>\n")
+            self.write("             <constraint type=\"LIST\">\n")
+            self.write("               <parameter name=\"allowedValues\"><list>\n")
+            for opt in options:
+               self.write("                 <value>%s</value>\n" % opt["name"])
+            self.write("               </list></parameter>\n")
+            self.write("             </constraint>\n")
+            self.write("           </constraints>\n")
+         self.write("         </property>\n")
+      if assoc_types.has_key(ftype):
+         self.associations.append((alf_id,name,assoc_types.get(ftype)))
+
    def complete(self):
       self.out.write("""
   </%s>

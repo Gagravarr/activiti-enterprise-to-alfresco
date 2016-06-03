@@ -128,7 +128,6 @@ def handle_outcomes(outcomes, form, share_form):
 
 def field_to_model(field, as_form):
    field_id, alf_id, name = build_field_ids(field, namespace)
-   ftype, alf_type, options, required = build_field_type(field)
 
    print " %s -> %s" % (field_id,name)
 
@@ -137,30 +136,9 @@ def field_to_model(field, as_form):
    if as_form and field.has_key("on-aspect"):
       print "    Via aspect %s" % field["on-aspect"].name
       return
-
-   # TODO Handle default values, multiples etc
-
-   if alf_type:
-      model.write("         <property name=\"%s\">\n" % alf_id)
-      if name:
-         model.write("           <title>%s</title>\n" % name)
-      model.write("           <type>%s</type>\n" % alf_type)
-      if ftype == "readonly-text":
-         model.write("           <default>%s</default>\n" % field.get("value",""))
-      if required:
-         model.write("           <mandatory>true</mandatory>\n")
-      if options:
-         model.write("           <constraints>\n")
-         model.write("             <constraint type=\"LIST\">\n")
-         model.write("               <parameter name=\"allowedValues\"><list>\n")
-         for opt in options:
-            model.write("                 <value>%s</value>\n" % opt["name"])
-         model.write("               </list></parameter>\n")
-         model.write("             </constraint>\n")
-         model.write("           </constraints>\n")
-      model.write("         </property>\n")
-   if assoc_types.has_key(ftype):
-      model.associations.append((alf_id,name,assoc_types.get(ftype)))
+   else:
+      # Convert to Property or Assoc
+      model.convert_field(field, namespace)
 
 def field_to_share(field):
    field_id, alf_id, name = build_field_ids(field, namespace)

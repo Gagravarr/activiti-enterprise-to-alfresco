@@ -271,7 +271,7 @@ class ShareFormConfigOutput(object):
          appearance += " read-only=\"true\""
       appearance += ">\n"
 
-      value = escape(field.get("value","") or "")
+      value = escape(field.get("value",None) or "")
       if ftype == "readonly-text":
           appearance += "  <control template=\"/org/alfresco/components/form/controls/readonly.ftl\">\n"
           appearance += "    <control-param name=\"value\">%s</control-param>\n" % value

@@ -93,42 +93,6 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 ##########################################################################
 
-def build_field_ids(field):
-   field_id = field["id"]
-   for c in (u"\u2019","&",",",".",":",";"):
-      field_id = field_id.replace(c,"")
-   alf_id = "%s:%s" % (namespace, field_id)
-   name = field.get("name", None)
-   return (field_id, alf_id, name)
-
-def build_field_type(field):
-   ftype = field["type"]
-
-   # If type is "readonly", ensure the read only flag is properly set
-   if ftype == "readonly":
-      field["readOnly"] = True
-
-   # Is it one where the type information is nested?
-   if ftype in type_nested_in_params:
-      ftype = field["params"]["field"]["type"]
-
-   # Check how to convert
-   if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
-      print "Warning - unhandled type %s" % ftype
-      print _field_to_json(field)
-      ftype = "text"
-
-   alf_type = property_types.get(ftype, None)
-   required = field.get("required", False)
-   options = field.get("options", None)
-
-   return (ftype, alf_type, options, required)
-
-def _field_to_json(field):
-   # Exclude bits we added onto the field
-   fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
-   return json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
-
 def handle_fields(fields, share_form):
    for field in fields:
       # Is this a normal field, or a container with children?
@@ -163,7 +127,7 @@ def handle_outcomes(outcomes, form, share_form):
    form.outcomes.append(outcome_prop)
 
 def field_to_model(field, as_form):
-   field_id, alf_id, name = build_field_ids(field)
+   field_id, alf_id, name = build_field_ids(field, namespace)
    ftype, alf_type, options, required = build_field_type(field)
 
    print " %s -> %s" % (field_id,name)
@@ -199,7 +163,7 @@ def field_to_model(field, as_form):
       model.associations.append((alf_id,name,assoc_types.get(ftype)))
 
 def field_to_share(field):
-   field_id, alf_id, name = build_field_ids(field)
+   field_id, alf_id, name = build_field_ids(field, namespace)
    ftype, alf_type, options, required = build_field_type(field)
 
    # Record the Share "field-visibility" for this
@@ -291,7 +255,7 @@ class Form(object):
       # TODO Filter out fields which are read-only on this form
       for aspect in self.aspects:
          for field in aspect.fields:
-            to_set.append( build_field_ids(field)[1] )
+            to_set.append( build_field_ids(field, namespace)[1] )
       # Have the BPMN updated for these
       if to_set:
          TaskToExecutionFixer.fix(self.form_elem, to_set)

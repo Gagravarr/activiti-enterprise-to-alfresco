@@ -302,6 +302,42 @@ def get_alfresco_task_types(form):
    print "Error - Activiti task with form but no namespace - %s" % task_tag
    sys.exit(1)
 
+def build_field_ids(field, namespace):
+   field_id = field["id"]
+   for c in (u"\u2019","&",",",".",":",";"):
+      field_id = field_id.replace(c,"")
+   alf_id = "%s:%s" % (namespace, field_id)
+   name = field.get("name", None)
+   return (field_id, alf_id, name)
+
+def build_field_type(field):
+   ftype = field["type"]
+
+   # If type is "readonly", ensure the read only flag is properly set
+   if ftype == "readonly":
+      field["readOnly"] = True
+
+   # Is it one where the type information is nested?
+   if ftype in type_nested_in_params:
+      ftype = field["params"]["field"]["type"]
+
+   # Check how to convert
+   if not property_types.has_key(ftype) and not assoc_types.has_key(ftype):
+      print "Warning - unhandled type %s" % ftype
+      print _field_to_json(field)
+      ftype = "text"
+
+   alf_type = property_types.get(ftype, None)
+   required = field.get("required", False)
+   options = field.get("options", None)
+
+   return (ftype, alf_type, options, required)
+
+def _field_to_json(field):
+   # Exclude bits we added onto the field
+   fieldsmpl = dict((k,v) for k,v in field.iteritems() if not "aspect" in k)
+   return json.dumps(fieldsmpl, sort_keys=True, indent=4, separators=(',', ': '))
+
 ##########################################################################
 
 class AssigneeFixer(BPMNFixer):

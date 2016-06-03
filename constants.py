@@ -30,6 +30,7 @@ property_types = {
    "integer": "d:int",
    "text": "d:text",
    "multi-line-text": "d:text",
+   "amount": "d:text", # See ACE-877 for "proper" support request
    "readonly-text": "d:text",
    "radio-buttons": "d:text",
    "dropdown": "d:text",

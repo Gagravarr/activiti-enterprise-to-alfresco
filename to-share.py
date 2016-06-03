@@ -94,7 +94,9 @@ share_config.begin(model_name, namespace_uri, namespace)
 ##########################################################################
 
 def build_field_ids(field):
-   field_id = field["id"].replace(u"\u2019","")
+   field_id = field["id"]
+   for c in (u"\u2019","&",",",".",":",";"):
+      field_id = field_id.replace(c,"")
    alf_id = "%s:%s" % (namespace, field_id)
    name = field.get("name", None)
    return (field_id, alf_id, name)

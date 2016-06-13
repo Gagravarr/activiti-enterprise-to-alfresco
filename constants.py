@@ -15,6 +15,9 @@ xml_namespaces = {
   'xsd':'http://www.w3.org/2001/XMLSchema',
 }
 
+# Marker for a field id's label "field"
+field_label_marker_suffix = "-label"
+
 # Activiti tasks types as used by Alfresco One 
 start_task = "bpm:startTask"
 

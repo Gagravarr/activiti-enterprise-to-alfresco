@@ -96,6 +96,10 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 def handle_fields(fields, share_form):
    for field in fields:
+      # Is this actually a label for another one?
+      if field.get("is-label"):
+         continue
+
       # Is this a normal field, or a container with children?
       child_fields = get_child_fields(field)
       if child_fields:
@@ -248,6 +252,19 @@ for form in forms:
          form_fields[field_id] = {}
       form_fields[field_id][form] = f
 
+# Remove any fields which are actually labels
+for field_id in [f for f in form_fields.keys() if f.endswith(field_label_marker_suffix)]:
+   mfid = field_id[:-len(field_label_marker_suffix)]
+   if mfid in form_fields.keys():
+      for form,field in form_fields[field_id].items():
+         field["is-label"] = True
+         mfield = form_fields[mfid].get(form,None)
+      del form_fields[field_id]
+      print "Ignoring label field %s" % field_id
+   else:
+      print "Label-like field with no matching field found on %d forms: %s" % (len(form_fields[field_id]), field_id)
+
+# Aspects
 class Aspect(object):
    def __init__(self, aspect_id, forms):
       self._build_name(aspect_id)

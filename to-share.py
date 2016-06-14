@@ -249,7 +249,7 @@ for form in forms:
    for f in fields:
       field_id = f["id"]
       if not form_fields.has_key(field_id):
-         form_fields[field_id] = {}
+         form_fields[field_id] = OrderedDict()
       form_fields[field_id][form] = f
 
 # Remove any fields which are actually labels
@@ -281,6 +281,7 @@ class Aspect(object):
       self.name = "%s:%s" % (namespace, self.base_name)
    def add_field(self, field_id, field):
       # Record only the first instance of a field for model use
+      # (Fields should come in form order, first used form first)
       if not field_id in self.field_ids:
          self.fields.append(field)
          self.field_ids.append(field_id)

@@ -96,10 +96,6 @@ share_config.begin(model_name, namespace_uri, namespace)
 
 def handle_fields(fields, share_form):
    for field in fields:
-      # Is this actually a label for another one?
-      if field.get("is-label"):
-         continue
-
       # Is this a normal field, or a container with children?
       child_fields = get_child_fields(field)
       if child_fields:
@@ -252,15 +248,20 @@ for form in forms:
          form_fields[field_id] = OrderedDict()
       form_fields[field_id][form] = f
 
-# Remove any fields which are actually labels
+# Re-write label fields like "foo-label" into a read-only version of "foo"
 for field_id in [f for f in form_fields.keys() if f.endswith(field_label_marker_suffix)]:
    mfid = field_id[:-len(field_label_marker_suffix)]
    if mfid in form_fields.keys():
+      print "Changing %s into %s as read-only" % (field_id, mfid)
       for form,field in form_fields[field_id].items():
+         field["id"] = mfid
+         if field.get("name",None):
+            field["name"] = field["name"].replace(" - label","")
+            field["name"] = field["name"].replace("-label","")
+         field["readOnly"] = True
          field["is-label"] = True
-         mfield = form_fields[mfid].get(form,None)
+         form_fields[mfid][form] = field
       del form_fields[field_id]
-      print "Ignoring label field %s" % field_id
    else:
       print "Label-like field with no matching field found on %d forms: %s" % (len(form_fields[field_id]), field_id)
 

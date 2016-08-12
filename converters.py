@@ -475,8 +475,11 @@ class ActivitiMailFixer(BPMNFixer):
       emptyscript.text = "// No script here, run via an Execution listener"
 ActivitiMailFixer()
 
-class OutcomeFixer(BPMNFixer):
+class FlowConditionFixer(BPMNFixer):
+   condition_bean = "activiti_flowConditionsBean"
+   condition_bean_exists = "%s.exists" % condition_bean
    outcomes = {}
+
    def __init__(self):
       BPMNFixer.__init__(self,"{%s}conditionExpression"%bpmn20_ns,None)
 
@@ -488,17 +491,26 @@ class OutcomeFixer(BPMNFixer):
       otype = tag.get("{%s}type" % xsi_ns)
       if otype == "tFormalExpression":
          exp = tag.text
-         for form_id,alf_prop in OutcomeFixer.outcomes.items():
+         for form_id,alf_prop in FlowConditionFixer.outcomes.items():
             aoe = "${form" + form_id + "outcome"
             if exp.startswith(aoe):
                act_prop = alf_prop.replace(":","_")
                repl = exp.replace(aoe, "${%s"%act_prop)
                tag.text = repl
                return
+         if FlowConditionFixer.condition_bean in exp:
+            # TODO Is this the right replacement?
+            import re
+            repl = re.sub(FlowConditionFixer.condition_bean_exists+"\((\w+),\s+(\'\w+\')\)","(exists \\1.getVariable(\\2))", exp)
+            if not FlowConditionFixer.condition_bean in repl:
+               tag.text = repl
+               return
+
+         # If we get here, we don't know how to fix it up!
          print ""
          print "WARNING: Activiti-online only sequence condition found"
          print "   %s" % exp
-OutcomeFixer()
+FlowConditionFixer()
 
 class TaskToExecutionFixer(object):
    """
@@ -531,9 +543,3 @@ class TaskToExecutionFixer(object):
 
       # Add the script
       BPMNFixer.add_script(extension, script_type, script)
-
-# TODO Convert things like:
-# <sequenceFlow ...>
-#  conditionExpression xsi:type="tFormalExpression">${(activiti_flowConditionsBean.exists(execution, 'form982252outcome') &amp;&amp; form982252outcome == 'Reject')}</conditionExpression>
-#  </sequenceFlow>
-# into something that's compatible with Alfresco, eg using UEL

@@ -124,7 +124,7 @@ def handle_outcomes(outcomes, form, share_form):
    field_to_model(field, True)
    field_to_share(field)
    # Register it for BPMN Fixings
-   OutcomeFixer.register_outcome(form.form_ref, outcome_prop)
+   FlowConditionFixer.register_outcome(form.form_ref, outcome_prop)
    form.outcomes.append(outcome_prop)
 
 def field_to_model(field, as_form):

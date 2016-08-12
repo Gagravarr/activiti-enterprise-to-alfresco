@@ -531,3 +531,9 @@ class TaskToExecutionFixer(object):
 
       # Add the script
       BPMNFixer.add_script(extension, script_type, script)
+
+# TODO Convert things like:
+# <sequenceFlow ...>
+#  conditionExpression xsi:type="tFormalExpression">${(activiti_flowConditionsBean.exists(execution, 'form982252outcome') &amp;&amp; form982252outcome == 'Reject')}</conditionExpression>
+#  </sequenceFlow>
+# into something that's compatible with Alfresco, eg using UEL

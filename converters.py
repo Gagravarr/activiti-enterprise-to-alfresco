@@ -162,7 +162,7 @@ class ModelOutput(Output):
             self.write("           <mandatory>true</mandatory>\n")
          if options:
             self.write("           <constraints>\n")
-            self.write("             <constraint type=\"LIST\">\n")
+            self.write("             <constraint name=\"%sConstraint\" type=\"LIST\">\n" % alf_id)
             self.write("               <parameter name=\"allowedValues\"><list>\n")
             for opt in options:
                self.write("                 <value>%s</value>\n" % escape(opt["name"]))

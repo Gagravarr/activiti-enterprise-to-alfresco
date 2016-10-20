@@ -521,13 +521,21 @@ class TaskToExecutionFixer(object):
    """
    extensionElements = "{%s}extensionElements"%bpmn20_ns
    @classmethod
-   def fix(cls, task_tag, property_ids):
+   def fix(cls, task_tag, property_ids, outcome_ids):
       # Build the script
       script = "\n"
+
+      def script_set(what,rid1,rid2):
+         id1, id2 = [x.replace(":","_") for x in [rid1,rid2]]
+         return "%s.setVariable('%s', task.getVariable('%s'));\n" % \
+                (what, id1, id2)
+
       for alf_prop in property_ids:
-         act_prop = alf_prop.replace(":","_")
-         script += "execution.setVariable('%s', task.getVariable('%s'));\n" % \
-                   (act_prop, act_prop)
+         script += script_set("execution", alf_prop, alf_prop)
+      for alf_prop in outcome_ids:
+         script += script_set("execution", alf_prop, alf_prop)
+         script += script_set("execution", "bpmn_outcome", alf_prop)
+         script += script_set("task",      "bpmn_outcome", alf_prop)
 
       # Add the extension element if needed
       ee = task_tag.findall(cls.extensionElements)

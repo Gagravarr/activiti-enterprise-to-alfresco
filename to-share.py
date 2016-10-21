@@ -7,7 +7,6 @@ from collections import OrderedDict
 from constants import *
 from converters import *
 
-# TODO - Optional Model URI
 # TODO - Java class with model in it
 # TODO - Properties file for button names, outcomes etc
 #   listconstraint.<ns>_<constraint>.<value>=Name
@@ -19,7 +18,7 @@ from converters import *
 
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
-  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [module name] [output dir]"
+  print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [namespace uri] [module name] [output dir]"
   print ""
   print " eg to-share.py exported.bpmn20.xml exported.zip sample-wf"
   sys.exit(1)
@@ -27,8 +26,10 @@ if len(sys.argv) < 4 or "--help" in sys.argv:
 workflow = sys.argv[1]
 app_zip  = sys.argv[2]
 namespace = sys.argv[3]
-module_name = sys.argv[4] if len(sys.argv) > 4 else "FIXME"
-output_dir  = sys.argv[5] if len(sys.argv) > 5 else os.path.curdir
+namespace_uri = sys.argv[4] if len(sys.argv) > 4 else \
+                "Activit_Exported_%s" % namespace
+module_name = sys.argv[5] if len(sys.argv) > 5 else "FIXME"
+output_dir  = sys.argv[6] if len(sys.argv) > 6 else os.path.curdir
 
 # Sanity check our options
 with open(workflow, "r") as wf_file:
@@ -75,7 +76,6 @@ if len(form_refs) == 0:
 
 # Decide on the short namespace forms
 namespace_sf = namespace + ":"
-namespace_uri = "Activit_Exported_%s" % namespace
 model_name = "%s:model" % namespace
 
 # Check we only had one process

@@ -56,6 +56,7 @@ This will generate in the output directory four files:
  * model.xml   - Alfresco Model (Types+Aspects) for the workflow form values
  * share.xml   - Share Custom Config with the form definitions in
  * FIXME.bpmn20.xml - Updated BPMN workflow definition
+ * FIXME.java  - Java class with workflow constants
 
 Deploy detail
 -------------

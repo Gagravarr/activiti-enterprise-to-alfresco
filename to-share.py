@@ -99,6 +99,9 @@ model.begin(model_name, namespace_uri, namespace)
 context = ContextOutput(output_dir, module_name)
 context.begin(model_name, namespace_uri, namespace)
 
+constants = ConstantsOutput(output_dir, module_name)
+constants.begin(model_name, namespace_uri, namespace)
+
 share_config = ShareConfigOutput(output_dir, module_name)
 share_config.begin(model_name, namespace_uri, namespace)
 
@@ -379,6 +382,7 @@ tree.write(updated_workflow, encoding="UTF-8", xml_declaration=True)
 # Finish up
 model.complete()
 context.complete()
+constants.complete()
 share_config.complete()
 
 # Report as done

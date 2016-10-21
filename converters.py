@@ -222,6 +222,33 @@ class ContextOutput(Output):
 """)
       Output.complete(self)
 
+class ConstantsOutput(Output):
+   def __init__(self, output_dir, module_name):
+      self.classname = "%sWorkflowModel" % module_name
+      Output.__init__(self,output_dir,"%s.java"%self.classname, module_name)
+
+   def begin(self, model_name, namespace_uri, namespace):
+      self.out.write("""
+// TODO Correct this for your real Java package name
+package FIXME;
+
+import org.alfresco.service.namespace.QName;
+
+/**
+ * %s Workflow Model constants
+ */
+public interface %s
+{
+   public static final String URI = "%s";
+   public static final String PREFIX = "%s";
+""" % (self.module_name, self.classname, namespace_uri, namespace))
+
+   def complete(self):
+      self.out.write("""
+}
+""")
+      Output.complete(self)
+
 class ShareConfigOutput(Output):
    def __init__(self, output_dir, module_name):
       Output.__init__(self,output_dir,"share.xml", module_name)

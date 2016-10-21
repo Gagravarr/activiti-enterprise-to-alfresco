@@ -7,11 +7,13 @@ from constants import *
 # Various conversion helpers / base classes
 
 class Output(object):
+   outputs = []
    def __init__(self, output_dir, filename, module_name):
       import os
       self.outfile = os.path.join(output_dir, filename)
       self.out = open(self.outfile,"w")
       self.module_name = module_name
+      Output.outputs.append(self)
 
    def begin(self, model_name, namespace_uri, namespace):
       pass
@@ -271,17 +273,26 @@ class PropertiesLabelsOutput(Output):
       Output.__init__(self,output_dir,"custom-workflow.properties", module_name)
 
    def begin(self, model_name, namespace_uri, namespace):
+      self.namespace_uri = namespace_uri
+      self.namespace = namespace
       self.out.write("# Custom workflow labels\n")
 
-   def convert_outcome(self, as_field):
+   def _convert(self, to, as_field):
       self.out.write("\n")
       self.out.write("# %s\n" % as_field["name"])
       for oc in as_field["options"]:
-         ocn = oc["name"]
-         # TODO ID
-         self.out.write("workflowtask.outcome.%s=%s\n" % (ocn,ocn))
+         ocid = oc.get("id",None)
+         ocname = oc["name"]
+         if not ocid:
+            ocid = ocname
+         self.out.write("%s.%s=%s\n" % (to, ocid,ocname))
 
-   # TODO Options
+   def convert_outcome(self, as_field):
+      self._convert("workflowtask.outcome", as_field)
+
+   def convert_options(self, field):
+      field_id, alf_id, name = build_field_ids(field, self.namespace)
+      self._convert("listconstraint.%s_%s" % (self.namespace_uri, field_id), field)
 
    def complete(self):
       Output.complete(self)

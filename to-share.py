@@ -7,14 +7,6 @@ from collections import OrderedDict
 from constants import *
 from converters import *
 
-# TODO - Properties file for button names, outcomes etc
-#   listconstraint.<ns>_<constraint>.<value>=Name
-# eg listconstraint.quanticateTAWF_reviewOutcomeOptionConstraint.TAWFSave=Save
-# eg listconstraint.test_Form0OutcomeConstraint.Approve=Approve
-#   workflowtask.outcome.<constraintvalue>=Name
-# eg workflowtask.outcome.ATRWFRAISEQUYERY=Query
-# eg workflowtask.outcome.Approve=Approve
-
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
   print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [namespace uri] [module name] [output dir]"
@@ -151,6 +143,10 @@ def field_to_model(field, as_form):
 
    # Have it added to the constants list either way
    constants.convert_property(field_id, name)
+
+   # If it's a list of options, generate labels for localisation etc
+   if field.get("options",None) and not field.get("transition",False):
+      properties.convert_options(field)
 
    # If it's an Aspect field, and we're currently working
    #  on a Form, then skip adding it to the model - done later
@@ -401,8 +397,7 @@ properties.complete()
 print ""
 print "Conversion completed!"
 print "Files generated are:"
-# TODO Get this list via superclass
-for f in (model,context,share_config,updated_workflow,constants,properties):
+for f in Output.outputs + [updated_workflow]:
    if hasattr(f,"outfile"):
       print "  %s" % f.outfile
    else:

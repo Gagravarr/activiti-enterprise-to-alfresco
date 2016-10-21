@@ -41,12 +41,14 @@ Tweak these as needed (eg naming), then deploy to your on-premise Alfresco!
 
 Use detail
 ----------
-to-share.py &lt;exported.bpmn> &lt;exported-app.zip> &lt;namespace prefix> [output dir]
+to-share.py &lt;exported.bpmn> &lt;exported-app.zip> &lt;namespace prefix> [namespace uri] [module name] [output dir]
 
 Where:
  * *exported.bpmn* - BPMN workflow exported from Activiti
  * *exported-app.zip* - App definition zip exported from Activiti
  * *namespace prefix* - Prefix to use for the local version, eg sample-wf
+ * *namespace uri* - Optional, Workflow Model URI
+ * *module name* - Optional, name of Alfresco Module
 
 This will generate in the output directory four files:
  * module-context.xml - Context file to deploy the model and workflow, 

@@ -7,7 +7,6 @@ from collections import OrderedDict
 from constants import *
 from converters import *
 
-# TODO - Java class with model in it
 # TODO - Properties file for button names, outcomes etc
 #   listconstraint.<ns>_<constraint>.<value>=Name
 # eg listconstraint.quanticateTAWF_reviewOutcomeOptionConstraint.TAWFSave=Save
@@ -145,6 +144,9 @@ def field_to_model(field, as_form):
 
    print " %s -> %s" % (field_id,name)
 
+   # Have it added to the constants list either way
+   constants.convert_property(field_id, name)
+
    # If it's an Aspect field, and we're currently working
    #  on a Form, then skip adding it to the model - done later
    if as_form and field.has_key("on-aspect"):
@@ -204,7 +206,8 @@ class Form(object):
       self.outcomes = []
 
    def update_form_id(self):
-      self.form_new_ref = "%s:Form%d" % (namespace, self.form_num)
+      self.form_new_name = "Form%d" % (self.form_num)
+      self.form_new_ref = "%s:%s" % (namespace, self.form_new_name)
       self.form_elem.set("{%s}formKey" % activiti_ns, self.form_new_ref)
 
    def task_vars_to_execution(self):
@@ -289,6 +292,7 @@ class Aspect(object):
    def _build_name(self, aspect_id):
       if not type(aspect_id) in (str,unicode):
          aspect_id = "%d" % aspect_id
+      self.aspect_id_str = aspect_id
       self.base_name = "Aspect%s" % aspect_id
       self.name = "%s:%s" % (namespace, self.base_name)
    def add_field(self, field_id, field):
@@ -347,6 +351,7 @@ for form in forms:
 
    # Process as a type
    model.start_type(form)
+   constants.convert_type(form)
    handle_fields(get_child_fields(form), share_form)
    handle_outcomes(form.json.get("outcomes",[]), form, share_form)
    model.end_type(form)
@@ -365,6 +370,7 @@ for aspect in aspects:
    print ""
    print "Processing aspect %s for %s" % (aspect.aspect_id, aspect.name)
    model.start_aspect(aspect.name)
+   constants.convert_aspect(aspect)
    for field in aspect.fields:
       field_to_model(field, False)
    model.end_aspect()

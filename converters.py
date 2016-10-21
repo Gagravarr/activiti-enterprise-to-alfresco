@@ -225,6 +225,7 @@ class ContextOutput(Output):
 class ConstantsOutput(Output):
    def __init__(self, output_dir, module_name):
       self.classname = "%sWorkflowModel" % module_name
+      self.properties = {}
       Output.__init__(self,output_dir,"%s.java"%self.classname, module_name)
 
    def begin(self, model_name, namespace_uri, namespace):
@@ -241,12 +242,28 @@ public interface %s
 {
    public static final String URI = "%s";
    public static final String PREFIX = "%s";
+
 """ % (self.module_name, self.classname, namespace_uri, namespace))
 
+   def convert_type(self, form):
+      name = form.form_new_name
+      self.out.write("   public static final QNAME TYPE_%s = QName.createQName(URI, \"%s\");\n" %
+                     (name.upper(), name))
+   def convert_aspect(self, aspect):
+      aname = aspect.aspect_id_str.upper()
+      self.out.write("   public static final QNAME ASPECT_%s = QName.createQName(URI, \"%s\");\n" %
+                     (aname, aspect.base_name))
+
+   def convert_property(self, field_id, name):
+      pname = name.replace(" ","_").upper()
+      self.properties[pname] = field_id
+
    def complete(self):
-      self.out.write("""
-}
-""")
+      self.out.write("\n")
+      for pname in sorted(self.properties.keys()):
+         self.out.write("   public static final QNAME PROP_%s = QName.createQName(URI, \"%s\");\n" %
+                        (pname, self.properties[pname]))
+      self.out.write("}\n")
       Output.complete(self)
 
 class ShareConfigOutput(Output):

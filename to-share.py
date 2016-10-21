@@ -7,6 +7,16 @@ from collections import OrderedDict
 from constants import *
 from converters import *
 
+# TODO - Optional Model URI
+# TODO - Java class with model in it
+# TODO - Properties file for button names, outcomes etc
+#   listconstraint.<ns>_<constraint>.<value>=Name
+# eg listconstraint.quanticateTAWF_reviewOutcomeOptionConstraint.TAWFSave=Save
+# eg listconstraint.test_Form0OutcomeConstraint.Approve=Approve
+#   workflowtask.outcome.<constraintvalue>=Name
+# eg workflowtask.outcome.ATRWFRAISEQUYERY=Query
+# eg workflowtask.outcome.Approve=Approve
+
 if len(sys.argv) < 4 or "--help" in sys.argv:
   print "Use:"
   print "   to-share.py <exported.bpmn> <exported-app.zip> <namespace prefix> [module name] [output dir]"
@@ -196,17 +206,15 @@ class Form(object):
 
    def task_vars_to_execution(self):
       # List of Property IDs to copy over
-      to_set = []
-      # Any Custom Outcomes need doing
-      to_set.extend( self.outcomes )
+      prop_ids = []
       # As do any writable aspect properties
       # TODO Filter out fields which are read-only on this form
       for aspect in self.aspects:
          for field in aspect.fields:
-            to_set.append( build_field_ids(field, namespace)[1] )
+            prop_ids.append( build_field_ids(field, namespace)[1] )
       # Have the BPMN updated for these
-      if to_set:
-         TaskToExecutionFixer.fix(self.form_elem, to_set)
+      if prop_ids or self.outcomes:
+         TaskToExecutionFixer.fix(self.form_elem, prop_ids, self.outcomes)
 
    def load_json(self):
       # Locate the JSON for it

@@ -266,6 +266,26 @@ public interface %s
       self.out.write("}\n")
       Output.complete(self)
 
+class PropertiesLabelsOutput(Output):
+   def __init__(self, output_dir, module_name):
+      Output.__init__(self,output_dir,"custom-workflow.properties", module_name)
+
+   def begin(self, model_name, namespace_uri, namespace):
+      self.out.write("# Custom workflow labels\n")
+
+   def convert_outcome(self, as_field):
+      self.out.write("\n")
+      self.out.write("# %s\n" % as_field["name"])
+      for oc in as_field["options"]:
+         ocn = oc["name"]
+         # TODO ID
+         self.out.write("workflowtask.outcome.%s=%s\n" % (ocn,ocn))
+
+   # TODO Options
+
+   def complete(self):
+      Output.complete(self)
+
 class ShareConfigOutput(Output):
    def __init__(self, output_dir, module_name):
       Output.__init__(self,output_dir,"share.xml", module_name)

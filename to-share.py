@@ -104,6 +104,9 @@ constants.begin(model_name, namespace_uri, namespace)
 share_config = ShareConfigOutput(output_dir, module_name)
 share_config.begin(model_name, namespace_uri, namespace)
 
+properties = PropertiesLabelsOutput(output_dir, module_name)
+properties.begin(model_name, namespace_uri, namespace)
+
 ##########################################################################
 
 def handle_fields(fields, share_form):
@@ -135,6 +138,8 @@ def handle_outcomes(outcomes, form, share_form):
    # Have the Model and Share bits generated
    field_to_model(field, True)
    field_to_share(field)
+   # Generate labels for localisation etc
+   properties.convert_outcome(field)
    # Register it for BPMN Fixings
    FlowConditionFixer.register_outcome(form.form_ref, outcome_prop)
    form.outcomes.append(outcome_prop)
@@ -390,12 +395,14 @@ model.complete()
 context.complete()
 constants.complete()
 share_config.complete()
+properties.complete()
 
 # Report as done
 print ""
 print "Conversion completed!"
 print "Files generated are:"
-for f in (model,context,share_config,updated_workflow):
+# TODO Get this list via superclass
+for f in (model,context,share_config,updated_workflow,constants,properties):
    if hasattr(f,"outfile"):
       print "  %s" % f.outfile
    else:

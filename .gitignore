@@ -1,2 +1,11 @@
+# Temp files
 .*.swp
 *.pyc
+
+# Program outputs
+*.bpmn20.xml
+*WorkflowModel.java
+custom-workflow.properties
+module-context.xml
+model.xml
+share.xml

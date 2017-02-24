@@ -597,20 +597,39 @@ class TaskToExecutionFixer(object):
    extensionElements = "{%s}extensionElements"%bpmn20_ns
    @classmethod
    def fix(cls, task_tag, property_ids, outcome_ids):
-      # Build the script
-      script = "\n"
-
-      def script_set(what,rid1,rid2):
-         id1, id2 = [x.replace(":","_") for x in [rid1,rid2]]
-         return "%s.setVariable('%s', task.getVariable('%s'));\n" % \
-                (what, id1, id2)
+      # Build the list of things to fix
+      tofix = {}
+      def to_fix(on, there, source):
+          if not tofix.has_key(on):
+             tofix[on] = {}
+          id1, id2 = [x.replace(":","_") for x in [there,source]]
+          tofix[on][id1] = id2
 
       for alf_prop in property_ids:
-         script += script_set("execution", alf_prop, alf_prop)
+         to_fix("execution", alf_prop, alf_prop)
       for alf_prop in outcome_ids:
-         script += script_set("execution", alf_prop, alf_prop)
-         script += script_set("execution", "bpmn_outcome", alf_prop)
-         script += script_set("task",      "bpmn_outcome", alf_prop)
+         to_fix("execution", alf_prop, alf_prop)
+         to_fix("execution", "bpmn_outcome", alf_prop)
+         to_fix("task",      "bpmn_outcome", alf_prop)
+
+      # If nothing needed changing, finish now
+      if not tofix:
+         return
+
+      # Build the script to do the fixing
+      script = "\n// Sync variables with other scopes\n"
+      for on in tofix.keys():
+         script += "var %s_fixes = { \n" % on
+         first = True
+         for k,v in tofix[on].items():
+            script += "%s   '%s':'%s'" % ("" if first else ",\n",k,v)
+            first = False
+         script += "\n};\n"
+         script += "for (var vn in %s_fixes) {\n" % on
+         script += "  var vn2 = %s_fixes[vn];\n" % on
+         script += "  var val = task.getVariable(vn2);\n"
+         script += "  if(val) { %s.setVariable(vn, val); }\n" % on
+         script += "};\n"
 
       # Add the extension element if needed
       ee = task_tag.findall(cls.extensionElements)

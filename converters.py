@@ -618,18 +618,27 @@ class TaskToExecutionFixer(object):
 
       # Build the script to do the fixing
       script = "\n// Sync variables with other scopes\n"
-      for on in tofix.keys():
-         script += "var %s_fixes = { \n" % on
+      script += "var fixes = {\n"
+      for idx, on in enumerate(tofix.keys()):
+         if idx != 0:
+            script += ",\n"
+         script += "  %s: {\n" % on
+
          first = True
          for k,v in tofix[on].items():
-            script += "%s   '%s':'%s'" % ("" if first else ",\n",k,v)
+            script += "%s    '%s':'%s'" % ("" if first else ",\n",k,v)
             first = False
-         script += "\n};\n"
-         script += "for (var vn in %s_fixes) {\n" % on
-         script += "  var vn2 = %s_fixes[vn];\n" % on
-         script += "  var val = task.getVariable(vn2);\n"
-         script += "  if(val) { %s.setVariable(vn, val); }\n" % on
-         script += "};\n"
+         script += "\n  }"
+      script += "\n};\n"
+      script += "for (var vtype in fixes) {\n"
+      script += "  for (var vn in fixes[vtype]) {\n"
+      script += "    var vn2 = fixes[vtype][vn];\n"
+      script += "    var val = task.getVariable(vn2);\n"
+      script += "    if(val) { vtype.setVariable(vn, val); }\n"
+      script += "  }\n"
+      script += "}\n"
+      script += "logger.debug('Synced %d variables to other scopes');\n" % \
+                                         sum([len(x) for x in tofix.values()])
 
       # Add the extension element if needed
       ee = task_tag.findall(cls.extensionElements)

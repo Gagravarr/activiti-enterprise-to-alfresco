@@ -628,7 +628,8 @@ class TaskToExecutionFixer(object):
          sscope += "'%s':%s" % (on,on)
 
          first = True
-         for k,v in tofix[on].items():
+         for k in sorted(tofix[on].keys()):
+            v = tofix[on][k]
             script += "%s    '%s':'%s'" % ("" if first else ",\n",k,v)
             first = False
          script += "\n  }"
@@ -640,7 +641,7 @@ class TaskToExecutionFixer(object):
       script += "    var val = task.getVariable(vn2);\n"
       script += "    if(val) { scopes[vtype].setVariable(vn, val); }\n"
       script += "  }\n"
-      script += "  logger.debug('Synced ' + fixes[vtype].length + ' items for ' + vtype);\n"
+      script += "  logger.debug('Synced ' + Object.keys(fixes[vtype].length) + ' items for ' + vtype);\n"
       script += "}\n"
 
       # Add the extension element if needed
